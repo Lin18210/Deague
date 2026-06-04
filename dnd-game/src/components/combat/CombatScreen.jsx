@@ -129,13 +129,17 @@ export default function CombatScreen({
                     disabled={processing || character.mana < spell.manaCost}
                     className={`flex flex-col items-center gap-1 rounded-lg p-4 hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                       character.mana >= spell.manaCost
-                        ? 'bg-blue-900/30 border border-blue-700 hover:border-blue-300'
+                        ? spell.effect
+                          ? 'bg-purple-900/30 border border-purple-700 hover:border-purple-300'
+                          : 'bg-blue-900/30 border border-blue-700 hover:border-blue-300'
                         : 'bg-slate-800/50 border border-slate-800'
                     }`}
                   >
-                    <Wand2 size={28} className={character.mana >= spell.manaCost ? 'text-blue-300' : 'text-slate-600'} />
+                    <Wand2 size={28} className={character.mana >= spell.manaCost ? spell.effect ? 'text-purple-300' : 'text-blue-300' : 'text-slate-600'} />
                     <span className="text-sm font-display text-amber-100">{spell.name}</span>
-                    <span className="text-xs text-blue-50/40 font-mono">{spell.manaCost} mp</span>
+                    <span className="text-xs text-blue-50/40 font-mono">
+                      {spell.effect ? `+2 AC` : `${spell.manaCost} mp`}
+                    </span>
                   </button>
                 ))}
 

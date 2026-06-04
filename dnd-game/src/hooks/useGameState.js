@@ -12,7 +12,6 @@ export function useGameState() {
   ]);
   const [narrative, setNarrative] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [combat, setCombat] = useState(null);
 
   const addLog = useCallback((text) => {
     setGameLog((prev) => [{ id: Date.now(), text }, ...prev]);
@@ -30,46 +29,36 @@ export function useGameState() {
     addLog(`⚔️ ${character.name} chose: ${choice}`);
     setIsLoading(true);
 
-    const result = await generateNarrative(scene, choice, character);
-    setNarrative(result.narrative);
-    addLog(`📖 ${result.narrative.substring(0, 100)}...`);
+    try {
+      const result = await generateNarrative(scene, choice, character);
+      setNarrative(result.narrative);
+      addLog(`📖 ${result.narrative.substring(0, 100)}...`);
 
-    if (result.choices.length > 0) {
-      setScene((prev) => ({ ...prev, choices: result.choices }));
+      if (result.choices && result.choices.length > 0) {
+        setScene((prev) => ({ ...prev, choices: result.choices }));
+      }
+    } catch (err) {
+      addLog('❌ Failed to generate narrative. Using fallback...');
     }
 
     setIsLoading(false);
   }, [scene, character, addLog]);
 
-  const startCombat = useCallback((enemy) => {
-    setCombat({
-      active: true,
-      enemy,
-      turn: 'player',
-      round: 1,
-      combatLog: [`⚔️ Combat begins! ${enemy.name} appears!`],
-      playerAC: character.ac,
-    });
-    addLog(`⚔️ Combat started against ${enemy.name}!`);
-    setScreen('combat');
-  }, [character, addLog]);
-
-  const endCombat = useCallback((victory) => {
+  const endCombat = useCallback((victory, enemyName) => {
     if (victory) {
-      addLog(`🏆 ${character.name} defeated ${combat?.enemy?.name}!`);
+      addLog(`🏆 ${character.name} defeated ${enemyName}!`);
     } else {
-      addLog(`💀 ${character.name} was defeated by ${combat?.enemy?.name}...`);
+      addLog(`💀 ${character.name} was defeated by ${enemyName}...`);
     }
-    setCombat(null);
     setScreen('player');
-  }, [character, combat, addLog]);
+    setNarrative('');
+  }, [character, addLog]);
 
   const resetGame = useCallback(() => {
     setScreen('lobby');
     setScene(initialScene);
     setCharacter(initialCharacter);
     setNarrative('');
-    setCombat(null);
     setGameLog([{ id: Date.now(), text: '🎲 A new adventure begins...' }]);
   }, []);
 
@@ -85,8 +74,6 @@ export function useGameState() {
     narrative,
     isLoading,
     handlePlayerChoice,
-    combat,
-    startCombat,
     endCombat,
     resetGame,
   };
