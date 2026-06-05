@@ -1,7 +1,14 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { initialScene } from '../data/initialScene';
 import { initialCharacter } from '../data/initialCharacter';
-import { generateNarrative } from '../services/aiService';
+import { generateNarrative, generateCombatOutcome } from '../services/aiService';
+import {
+  initialStoryState,
+  createStoryContext,
+  parseFlags,
+  applyConsequences,
+  computePlayerReputation,
+} from '../data/storyState';
 
 export function useGameState() {
   const [screen, setScreen] = useState('lobby');
@@ -12,6 +19,17 @@ export function useGameState() {
   ]);
   const [narrative, setNarrative] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [storyState, setStoryState] = useState(initialStoryState);
+
+  const storyStateRef = useRef(storyState);
+  useEffect(() => {
+    storyStateRef.current = storyState;
+  }, [storyState]);
+
+  const narrativeRef = useRef(narrative);
+  useEffect(() => {
+    narrativeRef.current = narrative;
+  }, [narrative]);
 
   const addLog = useCallback((text) => {
     setGameLog((prev) => [{ id: Date.now(), text }, ...prev]);
@@ -25,40 +43,149 @@ export function useGameState() {
     setScene((prev) => ({ ...prev, ...updates }));
   }, []);
 
+  const applyAIResponse = useCallback((result, choice) => {
+    setNarrative(result.narrative);
+
+    if (result.narrative) {
+      addLog(`📖 ${result.narrative.substring(0, 120)}...`);
+    }
+
+    if (result.choices && result.choices.length > 0) {
+      setScene((prev) => ({ ...prev, choices: result.choices }));
+    }
+
+    if (result.flagsBlock) {
+      const parsed = parseFlags(result.flagsBlock);
+      if (parsed.flags && Object.keys(parsed.flags).length > 0) {
+        const flagSummary = Object.entries(parsed.flags)
+          .slice(0, 5)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(', ');
+        addLog(`⚡ Consequences: ${flagSummary}${Object.keys(parsed.flags).length > 5 ? '...' : ''}`);
+      }
+
+      setStoryState((prev) => {
+        const next = applyConsequences(prev, parsed, choice);
+        next.playerReputation = computePlayerReputation(next);
+        return next;
+      });
+
+      if (parsed.location) {
+        setScene((prev) => ({
+          ...prev,
+          title: parsed.location,
+        }));
+      }
+    }
+  }, [addLog]);
+
   const handlePlayerChoice = useCallback(async (choice) => {
     addLog(`⚔️ ${character.name} chose: ${choice}`);
     setIsLoading(true);
 
+    const context = createStoryContext(
+      storyStateRef.current,
+      character,
+      scene,
+      gameLog,
+      narrativeRef.current,
+    );
+
     try {
-      const result = await generateNarrative(scene, choice, character);
+      const result = await generateNarrative(scene, choice, character, context);
       setNarrative(result.narrative);
-      addLog(`📖 ${result.narrative.substring(0, 100)}...`);
+      addLog(`📖 ${result.narrative.substring(0, 120)}...`);
 
       if (result.choices && result.choices.length > 0) {
         setScene((prev) => ({ ...prev, choices: result.choices }));
+      }
+
+      if (result.flagsBlock) {
+        const parsed = parseFlags(result.flagsBlock);
+        if (parsed.flags && Object.keys(parsed.flags).length > 0) {
+          const flagSummary = Object.entries(parsed.flags)
+            .slice(0, 5)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(', ');
+          addLog(`⚡ Consequences: ${flagSummary}${Object.keys(parsed.flags).length > 5 ? '...' : ''}`);
+        }
+
+        setStoryState((prev) => {
+          const next = applyConsequences(prev, parsed, choice);
+          next.playerReputation = computePlayerReputation(next);
+          return next;
+        });
+
+        if (parsed.location) {
+          setScene((prev) => ({
+            ...prev,
+            title: parsed.location,
+          }));
+        }
       }
     } catch (err) {
       addLog('❌ Failed to generate narrative. Using fallback...');
     }
 
     setIsLoading(false);
-  }, [scene, character, addLog]);
+  }, [scene, character, gameLog, addLog]);
 
-  const endCombat = useCallback((victory, enemyName) => {
-    if (victory) {
-      addLog(`🏆 ${character.name} defeated ${enemyName}!`);
-    } else {
-      addLog(`💀 ${character.name} was defeated by ${enemyName}...`);
-    }
+  const endCombat = useCallback(async (victory, enemyName, combatLog, enemy) => {
+    const context = createStoryContext(
+      storyStateRef.current,
+      character,
+      scene,
+      gameLog,
+      narrativeRef.current,
+    );
+
+    const outcomeLabel = victory
+      ? `🏆 ${character.name} defeated ${enemyName}!`
+      : `💀 ${character.name} was defeated by ${enemyName}...`;
+    addLog(outcomeLabel);
+
     setScreen('player');
     setNarrative('');
-  }, [character, addLog]);
+
+    if (victory) {
+      try {
+        const result = await generateCombatOutcome(
+          character,
+          enemy || { name: enemyName },
+          true,
+          combatLog,
+          context,
+        );
+
+        if (result.narrative) {
+          setNarrative(result.narrative);
+          addLog(`📖 ${result.narrative.substring(0, 120)}...`);
+        }
+
+        if (result.choices && result.choices.length > 0) {
+          setScene((prev) => ({ ...prev, choices: result.choices }));
+        }
+
+        if (result.flagsBlock) {
+          const parsed = parseFlags(result.flagsBlock);
+          setStoryState((prev) => {
+            const next = applyConsequences(prev, parsed, `Victory against ${enemyName}`);
+            next.playerReputation = computePlayerReputation(next);
+            return next;
+          });
+        }
+      } catch {
+        setNarrative(`The dust settles. ${enemyName} lies defeated at your feet. You catch your breath and survey your surroundings.`);
+      }
+    }
+  }, [character, scene, gameLog, addLog]);
 
   const resetGame = useCallback(() => {
     setScreen('lobby');
     setScene(initialScene);
     setCharacter(initialCharacter);
     setNarrative('');
+    setStoryState(initialStoryState);
     setGameLog([{ id: Date.now(), text: '🎲 A new adventure begins...' }]);
   }, []);
 
@@ -73,6 +200,7 @@ export function useGameState() {
     addLog,
     narrative,
     isLoading,
+    storyState,
     handlePlayerChoice,
     endCombat,
     resetGame,

@@ -1,4 +1,4 @@
-import { Heart, Zap, Shield } from 'lucide-react';
+import { Heart, Zap, Shield, Star, ScrollText } from 'lucide-react';
 import { getAbilityMod } from '../../data/initialCharacter';
 
 function StatBar({ icon: Icon, label, current, max, color }) {
@@ -33,7 +33,33 @@ function StatRow({ label, value, mod }) {
   );
 }
 
-export default function CharacterHUD({ character, combatActive }) {
+function ReputationBar({ reputation }) {
+  const pct = ((reputation + 10) / 20) * 100;
+  let label, color;
+  if (reputation >= 7) { label = 'Heroic'; color = 'text-yellow-300'; }
+  else if (reputation >= 3) { label = 'Respected'; color = 'text-green-300'; }
+  else if (reputation >= -2) { label = 'Neutral'; color = 'text-amber-300'; }
+  else if (reputation >= -6) { label = 'Suspicious'; color = 'text-orange-300'; }
+  else { label = 'Feared'; color = 'text-red-300'; }
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-1">
+        <Star size={16} className={color} />
+        <span className="text-sm font-display text-amber-50/80">Reputation</span>
+        <span className={`text-sm ml-auto font-display ${color}`}>{label}</span>
+      </div>
+      <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-red-500 via-amber-500 to-yellow-400 rounded-full transition-[width]"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default function CharacterHUD({ character, combatActive, storyState }) {
   const stats = character.stats;
   const strMod = getAbilityMod(character, 'STR');
   const dexMod = getAbilityMod(character, 'DEX');
@@ -41,6 +67,9 @@ export default function CharacterHUD({ character, combatActive }) {
   const intMod = getAbilityMod(character, 'INT');
   const wisMod = getAbilityMod(character, 'WIS');
   const chaMod = getAbilityMod(character, 'CHA');
+
+  const activeQuests = storyState?.questLog?.filter(q => q.status === 'active') || [];
+  const completedQuests = storyState?.questLog?.filter(q => q.status === 'completed') || [];
 
   return (
     <div className="lg:w-80 bg-slate-900 border-l border-amber-900/30 p-6 space-y-6 overflow-y-auto shrink-0">
@@ -50,6 +79,9 @@ export default function CharacterHUD({ character, combatActive }) {
           {character.class} · Level {character.level}
           {combatActive && <span className="ml-2 text-red-400">⚔️ IN COMBAT</span>}
         </p>
+        {storyState && (
+          <p className="text-amber-50/30 text-xs font-serif mt-1">{storyState.currentLocation}</p>
+        )}
       </div>
 
       <div className="space-y-3">
@@ -60,7 +92,24 @@ export default function CharacterHUD({ character, combatActive }) {
           <span className="text-sm font-display text-amber-50/80">Armor Class</span>
           <span className="text-sm ml-auto text-amber-50/60 font-mono">{character.ac}</span>
         </div>
+        {storyState && <ReputationBar reputation={storyState.playerReputation} />}
       </div>
+
+      {activeQuests.length > 0 && (
+        <div>
+          <h4 className="font-display text-xs text-amber-300 mb-2 uppercase tracking-wider flex items-center gap-1">
+            <ScrollText size={12} />
+            Active Quests
+          </h4>
+          <ul className="space-y-1">
+            {activeQuests.map((q, i) => (
+              <li key={i} className="text-xs text-amber-50/70 font-serif bg-slate-800/50 border border-amber-900/20 rounded px-3 py-1.5">
+                {q.title}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div>
         <h4 className="font-display text-xs text-amber-300 mb-2 uppercase tracking-wider">

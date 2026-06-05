@@ -12,6 +12,7 @@ export default function App() {
     game.updateCharacter,
     game.addLog,
     game.endCombat,
+    game.storyState,
   );
 
   const handlePlayerStartCombat = (enemy) => {
@@ -25,6 +26,7 @@ export default function App() {
         combatState={combat.combatState}
         diceResult={combat.diceResult}
         processing={combat.processing}
+        combatNarration={combat.combatNarration}
         character={game.character}
         onAttack={combat.playerAttack}
         onCastSpell={combat.playerCastSpell}
@@ -43,6 +45,7 @@ export default function App() {
         gameLog={game.gameLog}
         narrative={game.narrative}
         isLoading={game.isLoading}
+        storyState={game.storyState}
         onChoice={game.handlePlayerChoice}
         onReturn={() => game.setScreen('lobby')}
         onStartCombat={handlePlayerStartCombat}
@@ -56,6 +59,7 @@ export default function App() {
         scene={game.scene}
         character={game.character}
         gameLog={game.gameLog}
+        storyState={game.storyState}
         addLog={game.addLog}
         onUpdateScene={game.updateScene}
         onAddChoice={(choice) => {

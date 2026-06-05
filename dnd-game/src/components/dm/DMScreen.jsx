@@ -5,11 +5,13 @@ import ChoicesManager from './ChoicesManager';
 import PlayerPreview from './PlayerPreview';
 import DMLog from './DMLog';
 import { generateNarrative } from '../../services/aiService';
+import { createStoryContext } from '../../data/storyState';
 
 export default function DMScreen({
   scene,
   character,
   gameLog,
+  storyState,
   addLog,
   onUpdateScene,
   onAddChoice,
@@ -25,10 +27,13 @@ export default function DMScreen({
     setIsGenerating(true);
     addLog(`🤖 DM asks AI: "${prompt}"`);
 
+    const context = createStoryContext(storyState, character, scene, gameLog, '');
+
     const result = await generateNarrative(
       scene,
       `[DM DIRECTIVE - Generate new scene content]: ${prompt}`,
-      character
+      character,
+      context
     );
 
     if (result.narrative) {

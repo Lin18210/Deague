@@ -5,6 +5,7 @@ export default function CombatScreen({
   combatState,
   diceResult,
   processing,
+  combatNarration,
   character,
   onAttack,
   onCastSpell,
@@ -107,6 +108,12 @@ export default function CombatScreen({
           </div>
 
           <DiceRoller result={diceResult} />
+
+          {combatNarration && (
+            <div className="bg-red-900/10 border border-red-900/20 rounded-lg p-4 animate-in">
+              <p className="font-serif text-red-100/80 italic">{combatNarration}</p>
+            </div>
+          )}
 
           {isPlayerTurn && (
             <div className="bg-slate-900 border border-amber-900/20 rounded-lg p-6">

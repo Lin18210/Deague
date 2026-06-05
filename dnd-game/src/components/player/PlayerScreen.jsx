@@ -12,6 +12,7 @@ export default function PlayerScreen({
   gameLog,
   narrative,
   isLoading,
+  storyState,
   onChoice,
   onReturn,
   onStartCombat,
@@ -95,7 +96,7 @@ export default function PlayerScreen({
           )}
         </div>
 
-        <CharacterHUD character={character} combatActive={false} />
+        <CharacterHUD character={character} combatActive={false} storyState={storyState} />
       </div>
     </div>
   );
