@@ -53,6 +53,15 @@ export default function PlayerScreen({
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-serif">
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-orange-950/20 blur-[130px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-950/30 blur-[130px]" />
+        <div className="absolute bottom-0 left-[15%] w-1.5 h-1.5 bg-amber-500 rounded-full animate-float opacity-0" style={{ animationDelay: '0.1s', animationDuration: '4.2s' }} />
+        <div className="absolute bottom-0 left-[38%] w-2 h-2 bg-amber-600 rounded-full animate-float opacity-0" style={{ animationDelay: '1.4s', animationDuration: '5.6s' }} />
+        <div className="absolute bottom-0 left-[64%] w-1 h-1 bg-red-500 rounded-full animate-float opacity-0" style={{ animationDelay: '0.8s', animationDuration: '3.9s' }} />
+        <div className="absolute bottom-0 left-[83%] w-2.5 h-2.5 bg-amber-400 rounded-full animate-float opacity-0" style={{ animationDelay: '2.8s', animationDuration: '6.2s' }} />
+      </div>
+
       <GameHeader
         title={scene.title}
         subtitle={storyState?.currentLocation || 'A brave adventurer\'s tale'}
