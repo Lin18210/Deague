@@ -1,5 +1,6 @@
 import LobbyScreen from './components/lobby/LobbyScreen';
 import PlayerScreen from './components/player/PlayerScreen';
+import PrologueScreen from './components/player/PrologueScreen';
 import DMScreen from './components/dm/DMScreen';
 import CombatScreen from './components/combat/CombatScreen';
 import { useGameState } from './hooks/useGameState';
@@ -19,6 +20,15 @@ export default function App() {
     combat.startCombat(enemy);
     game.setScreen('combat');
   };
+
+  if (game.screen === 'prologue') {
+    return (
+      <PrologueScreen
+        onBegin={() => game.setScreen('player')}
+        onSkip={() => game.setScreen('player')}
+      />
+    );
+  }
 
   if (game.screen === 'combat' && combat.combatState) {
     return (
@@ -81,7 +91,7 @@ export default function App() {
   return (
     <LobbyScreen
       onSelectDM={() => game.setScreen('dm')}
-      onSelectPlayer={() => game.setScreen('player')}
+      onSelectPlayer={() => game.setScreen('prologue')}
     />
   );
 }
