@@ -1,4 +1,5 @@
 import LobbyScreen from './components/lobby/LobbyScreen';
+import CharacterSelectScreen from './components/lobby/CharacterSelectScreen';
 import PlayerScreen from './components/player/PlayerScreen';
 import PrologueScreen from './components/player/PrologueScreen';
 import DMScreen from './components/dm/DMScreen';
@@ -38,11 +39,16 @@ export default function App() {
     game.addLog(`🧪 ${game.character.name} drinks a potion: +${healAmount} HP (${newHp}/${game.character.maxHealth})`);
   };
 
+  if (game.screen === 'character-select') {
+    return <CharacterSelectScreen onSelect={game.selectCharacter} />;
+  }
+
   if (game.screen === 'prologue') {
     return (
       <PrologueScreen
         onBegin={() => game.setScreen('player')}
         onSkip={() => game.setScreen('player')}
+        character={game.character}
       />
     );
   }
@@ -58,6 +64,7 @@ export default function App() {
         onAttack={combat.playerAttack}
         onCastSpell={combat.playerCastSpell}
         onUsePotion={combat.usePotion}
+        onDodge={combat.dodge}
         onFlee={combat.flee}
         onReturn={game.resetGame}
       />
@@ -74,7 +81,7 @@ export default function App() {
         isLoading={game.isLoading}
         storyState={game.storyState}
         onChoice={game.handlePlayerChoice}
-        onReturn={() => game.setScreen('lobby')}
+        onReturn={() => game.setScreen('character-select')}
         onStartCombat={handlePlayerStartCombat}
         onUsePotion={handleUsePotion}
       />
@@ -109,7 +116,7 @@ export default function App() {
   return (
     <LobbyScreen
       onSelectDM={() => game.setScreen('dm')}
-      onSelectPlayer={() => game.setScreen('prologue')}
+      onSelectPlayer={() => game.setScreen('character-select')}
     />
   );
 }

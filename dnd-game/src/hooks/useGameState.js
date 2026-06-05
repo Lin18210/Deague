@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { initialScene } from '../data/initialScene';
-import { initialCharacter } from '../data/initialCharacter';
+import { initialCharacter, CLASS_PRESETS } from '../data/initialCharacter';
 import { generateNarrative, generateCombatOutcome } from '../services/aiService';
 import {
   initialStoryState,
@@ -12,6 +12,7 @@ import {
 
 export function useGameState() {
   const [screen, setScreen] = useState('lobby');
+  const [selectedClass, setSelectedClass] = useState(null);
   const [scene, setScene] = useState(initialScene);
   const [character, setCharacter] = useState(initialCharacter);
   const [gameLog, setGameLog] = useState([
@@ -148,6 +149,28 @@ export function useGameState() {
     setNarrative('');
 
     if (victory) {
+      const lootPool = [
+        'Gold Pouch (25 gp)',
+        'Healing Potion',
+        'Silver Dagger',
+        'Scroll of Identification',
+        'Enchanted Ring',
+        'Healing Potion',
+        'Gemstone (50 gp)',
+        'Oil Flask',
+        'Antidote Vial',
+        'Healing Potion',
+      ];
+      const lootCount = Math.random() < 0.4 ? 2 : 1;
+      const shuffled = [...lootPool].sort(() => Math.random() - 0.5);
+      const loot = shuffled.slice(0, lootCount);
+
+      setCharacter((prev) => ({
+        ...prev,
+        inventory: [...prev.inventory, ...loot],
+      }));
+      addLog(`🎒 Found loot: ${loot.join(', ')}`);
+
       try {
         const result = await generateCombatOutcome(
           character,
@@ -180,8 +203,17 @@ export function useGameState() {
     }
   }, [character, scene, gameLog, addLog]);
 
+  const selectCharacter = useCallback((classKey) => {
+    const preset = CLASS_PRESETS[classKey];
+    if (!preset) return;
+    setSelectedClass(classKey);
+    setCharacter({ ...preset });
+    setScreen('prologue');
+  }, []);
+
   const resetGame = useCallback(() => {
-    setScreen('lobby');
+    setScreen('character-select');
+    setSelectedClass(null);
     setScene(initialScene);
     setCharacter(initialCharacter);
     setNarrative('');
@@ -203,6 +235,7 @@ export function useGameState() {
     storyState,
     handlePlayerChoice,
     endCombat,
+    selectCharacter,
     resetGame,
   };
 }

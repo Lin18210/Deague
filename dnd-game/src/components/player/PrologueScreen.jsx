@@ -17,7 +17,7 @@ const FALLBACK_PROLOGUE = [
     subtitle: 'Darkness gathers',
   },
   {
-    text: `Among the few who still dare to walk the old roads is a lone adventurer — ${initialCharacter.name}. A ${initialCharacter.class.toLowerCase()} of some renown, carrying a ${initialCharacter.weapons[0].name.toLowerCase()} and the weight of choices yet unmade. Whether they become legend or lament, the road ahead will tell.`,
+    text: `Among the few who still dare to walk the old roads is a lone adventurer — ${char.name}. A ${char.class.toLowerCase()} of some renown, carrying a ${char.weapons[0].name.toLowerCase()} and the weight of choices yet unmade. Whether they become legend or lament, the road ahead will tell.`,
     subtitle: 'A hero rises',
   },
   {
@@ -88,7 +88,8 @@ function FadeChar({ char, visible }) {
   );
 }
 
-export default function PrologueScreen({ onBegin, onSkip }) {
+export default function PrologueScreen({ onBegin, onSkip, character }) {
+  const char = character || initialCharacter;
   const [paragraphs, setParagraphs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [atmosphericLine, setAtmosphericLine] = useState(0);
@@ -115,7 +116,7 @@ export default function PrologueScreen({ onBegin, onSkip }) {
     let cancelled = false;
     async function load() {
       try {
-        const result = await generateBackstory(initialCharacter);
+        const result = await generateBackstory(char);
         if (!cancelled && result?.narrative) {
           const parts = result.narrative
             .split(/\n\n+/)

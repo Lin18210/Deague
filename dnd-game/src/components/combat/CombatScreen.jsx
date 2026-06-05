@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Heart, Zap, Swords, Wand2, FlaskConical, Shield, Skull, Volume2, VolumeX } from 'lucide-react';
+import { Heart, Zap, Swords, Wand2, FlaskConical, Shield, Skull, Volume2, VolumeX, Wind } from 'lucide-react';
 import DiceRoller from './DiceRoller';
 import audio from '../../utils/audioEngine';
 
@@ -30,6 +30,7 @@ export default function CombatScreen({
   onAttack,
   onCastSpell,
   onUsePotion,
+  onDodge,
   onFlee,
   onReturn,
   onToggleMute,
@@ -69,6 +70,11 @@ export default function CombatScreen({
   const handleFlee = () => {
     audio.play('click');
     onFlee();
+  };
+
+  const handleDodge = () => {
+    audio.play('click');
+    onDodge();
   };
 
   const handleMute = () => {
@@ -214,6 +220,13 @@ export default function CombatScreen({
                   <FlaskConical size={28} className="text-green-300" />
                   <span className="text-sm font-display text-green-100">Potion</span>
                   <span className="text-xs text-green-50/40 font-mono">2d4+2</span>
+                </button>
+
+                <button onClick={handleDodge} disabled={processing}
+                  className="flex flex-col items-center gap-1 bg-teal-900/20 border border-teal-700/30 hover:border-teal-400 rounded-lg p-4 hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                  <Wind size={28} className="text-teal-300" />
+                  <span className="text-sm font-display text-teal-100">Dodge</span>
+                  <span className="text-xs text-teal-50/40 font-mono">DEX roll</span>
                 </button>
 
                 <button onClick={handleFlee} disabled={processing}

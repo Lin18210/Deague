@@ -91,6 +91,13 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
     setCombatState((prev) => {
       if (!prev || prev.turn === 'player') return prev;
 
+      if (prev.enemyMissNext) {
+        const logEntry = `💨 ${prev.enemy.name} swipes through empty air — the dodge worked!`;
+        addLog(logEntry);
+        combatLogRef.current = [...combatLogRef.current, logEntry];
+        return { ...prev, enemyMissNext: false, turn: 'player', round: prev.round + 1, log: [...prev.log, logEntry] };
+      }
+
       const char = characterRef.current;
       const enemy = prev.enemy;
       const attackRoll = rollD20(enemy.attackMod);
@@ -448,6 +455,37 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
     setTimeout(() => enemyTurn(), 800);
   }, [combatState, processing, updateCharacter, addCombatLog, addLog, enemyTurn, narrateAction]);
 
+  const dodge = useCallback(async () => {
+    if (!combatState || combatState.turn !== 'player' || processing) return;
+    setProcessing(true);
+
+    const dodgeRoll = rollD20(dexMod);
+    const dc = 10 + (combatState.enemy.attackMod || 5);
+    audio.play('click');
+
+    if (dodgeRoll.total >= dc) {
+      const logEntry = `💨 ${character.name} dodges! Rolled ${dodgeRoll.roll}+${dexMod}=${dodgeRoll.total} vs DC ${dc} — Enemy attack will miss!`;
+      addCombatLog(logEntry);
+      addLog(logEntry);
+      setDiceResult(dodgeRoll);
+
+      setCombatState((prev) => ({
+        ...prev,
+        enemyMissNext: true,
+        turn: 'enemy',
+      }));
+    } else {
+      const logEntry = `⚠️ ${character.name} tries to dodge but fails! Rolled ${dodgeRoll.roll}+${dexMod}=${dodgeRoll.total} vs DC ${dc}`;
+      addCombatLog(logEntry);
+      addLog(logEntry);
+      setDiceResult(dodgeRoll);
+      setCombatState((prev) => ({ ...prev, turn: 'enemy' }));
+    }
+
+    setProcessing(false);
+    setTimeout(() => enemyTurn(), 800);
+  }, [combatState, processing, character, dexMod, addCombatLog, addLog, enemyTurn]);
+
   const flee = useCallback(async () => {
     if (!combatState || combatState.turn !== 'player' || processing) return;
     setProcessing(true);
@@ -481,6 +519,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
     playerAttack,
     playerCastSpell,
     usePotion,
+    dodge,
     flee,
     addCombatLog,
   };
