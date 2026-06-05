@@ -26,8 +26,10 @@ const FALLBACK_PROLOGUE = [
   },
 ];
 
-const REVEAL_DELAY = 800;
-const PARAGRAPH_DELAY = 5000;
+const CHARS_PER_SECOND = 55;
+const TICK_MS = 28;
+const CHARS_PER_TICK = (CHARS_PER_SECOND * TICK_MS) / 1000;
+const PAUSE_BETWEEN_PARAGRAPHS = 1500;
 
 const EMBER_COUNT = 28;
 
@@ -73,10 +75,7 @@ function Embers() {
 function EmberSpark({ x, y }) {
   if (!x) return null;
   return (
-    <div
-      className="fixed pointer-events-none z-50"
-      style={{ left: x, top: y }}
-    >
+    <div className="fixed pointer-events-none z-50" style={{ left: x, top: y }}>
       {Array.from({ length: 4 }).map((_, i) => (
         <div
           key={i}
@@ -97,15 +96,33 @@ function EmberSpark({ x, y }) {
   );
 }
 
+function Cursor({ visible }) {
+  if (!visible) return null;
+  return (
+    <span
+      className="inline-block w-0.5 h-[1.1em] bg-amber-300 align-middle ml-0.5"
+      style={{
+        animation: 'cursorBlink 0.7s step-end infinite',
+        boxShadow: '0 0 6px rgba(252,211,77,0.6), 0 0 12px rgba(252,211,77,0.2)',
+      }}
+    />
+  );
+}
+
 export default function PrologueScreen({ onBegin, onSkip }) {
   const [paragraphs, setParagraphs] = useState([]);
-  const [visibleIndices, setVisibleIndices] = useState([]);
+  const [doneIndices, setDoneIndices] = useState([]);
+  const [typingIndex, setTypingIndex] = useState(-1);
+  const [typedLength, setTypedLength] = useState(0);
   const [allRevealed, setAllRevealed] = useState(false);
   const [showBegin, setShowBegin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [atmosphericLine, setAtmosphericLine] = useState(0);
   const [spark, setSpark] = useState({ x: null, y: null });
-  const timerRef = useRef(null);
+  const [cursorVisible, setCursorVisible] = useState(true);
+  const typeTimerRef = useRef(null);
+  const pauseTimerRef = useRef(null);
+  const isPausingRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -136,29 +153,72 @@ export default function PrologueScreen({ onBegin, onSkip }) {
   }, []);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || paragraphs.length === 0) return;
 
-    let current = 0;
-    const revealed = [];
+    setTypingIndex(0);
+    setTypedLength(0);
+    setDoneIndices([]);
+    setAllRevealed(false);
+    setShowBegin(false);
+    setCursorVisible(true);
+  }, [paragraphs, loading]);
 
-    function showNext() {
-      if (current >= paragraphs.length) {
-        setAllRevealed(true);
-        timerRef.current = setTimeout(() => setShowBegin(true), 1500);
-        return;
-      }
+  const finishParagraph = useCallback(() => {
+    if (typingIndex < 0 || typingIndex >= paragraphs.length) return;
+    const nextDone = [...doneIndices, typingIndex];
+    setDoneIndices(nextDone);
+    setTypedLength(paragraphs[typingIndex].text.length);
+    setCursorVisible(false);
 
-      revealed.push(current);
-      setVisibleIndices([...revealed]);
-      current++;
-
-      const isLast = current >= paragraphs.length;
-      timerRef.current = setTimeout(showNext, isLast ? PARAGRAPH_DELAY + 1000 : PARAGRAPH_DELAY);
+    if (nextDone.length >= paragraphs.length) {
+      setTypingIndex(-1);
+      setAllRevealed(true);
+      pauseTimerRef.current = setTimeout(() => setShowBegin(true), 1500);
+      return;
     }
 
-    timerRef.current = setTimeout(showNext, REVEAL_DELAY);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [paragraphs, loading]);
+    isPausingRef.current = true;
+    pauseTimerRef.current = setTimeout(() => {
+      isPausingRef.current = false;
+      const next = typingIndex + 1;
+      setTypingIndex(next);
+      setTypedLength(0);
+      setCursorVisible(true);
+    }, PAUSE_BETWEEN_PARAGRAPHS);
+  }, [typingIndex, doneIndices, paragraphs]);
+
+  const skipAllTyping = useCallback(() => {
+    if (typeTimerRef.current) clearTimeout(typeTimerRef.current);
+    if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
+    const allIndices = paragraphs.map((_, i) => i);
+    setDoneIndices(allIndices);
+    setTypingIndex(-1);
+    setCursorVisible(false);
+    setAllRevealed(true);
+    setShowBegin(true);
+  }, [paragraphs]);
+
+  useEffect(() => {
+    if (typingIndex < 0 || typingIndex >= paragraphs.length) return;
+    if (isPausingRef.current) return;
+
+    const text = paragraphs[typingIndex].text;
+    const maxLen = text.length;
+
+    typeTimerRef.current = setTimeout(() => {
+      setTypedLength((prev) => {
+        const next = Math.min(prev + CHARS_PER_TICK, maxLen);
+        if (next >= maxLen) {
+          finishParagraph();
+        }
+        return next;
+      });
+    }, TICK_MS);
+
+    return () => {
+      if (typeTimerRef.current) clearTimeout(typeTimerRef.current);
+    };
+  }, [typingIndex, typedLength, paragraphs, finishParagraph]);
 
   useEffect(() => {
     const lines = [
@@ -171,34 +231,77 @@ export default function PrologueScreen({ onBegin, onSkip }) {
     ];
 
     const interval = setInterval(() => {
-      setAtmosphericLine(prev => (prev + 1) % lines.length);
+      setAtmosphericLine((prev) => (prev + 1) % lines.length);
     }, 7500);
 
     return () => clearInterval(interval);
   }, []);
 
-  const handleClick = useCallback((e) => {
-    setSpark({ x: e.clientX, y: e.clientY });
-    setTimeout(() => setSpark({ x: null, y: null }), 1200);
+  const handleClick = useCallback(
+    (e) => {
+      setSpark({ x: e.clientX, y: e.clientY });
+      setTimeout(() => setSpark({ x: null, y: null }), 1200);
 
-    if (allRevealed) {
-      setShowBegin(true);
-    }
-  }, [allRevealed]);
+      if (allRevealed) {
+        setShowBegin(true);
+        return;
+      }
 
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Escape') {
-      onSkip();
-    }
-    if (e.key === 'Enter' && allRevealed) {
-      onBegin();
-    }
-  }, [onSkip, onBegin, allRevealed]);
+      if (isPausingRef.current) {
+        if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
+        isPausingRef.current = false;
+        const next = typingIndex + 1;
+        if (next >= paragraphs.length) {
+          setAllRevealed(true);
+          setTypingIndex(-1);
+          setCursorVisible(false);
+          setShowBegin(true);
+        } else {
+          setTypingIndex(next);
+          setTypedLength(0);
+          setCursorVisible(true);
+        }
+        return;
+      }
+
+      finishParagraph();
+    },
+    [allRevealed, typingIndex, paragraphs, finishParagraph]
+  );
+
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === 'Escape') {
+        skipAllTyping();
+        return;
+      }
+      if (e.key === ' ') {
+        e.preventDefault();
+        handleClick({ clientX: 0, clientY: 0 });
+        return;
+      }
+      if (e.key === 'Enter') {
+        if (!allRevealed) {
+          skipAllTyping();
+        } else {
+          onBegin();
+        }
+      }
+    },
+    [allRevealed, onBegin, handleClick, skipAllTyping]
+  );
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
+
+  useEffect(() => {
+    return () => {
+      if (typeTimerRef.current) clearTimeout(typeTimerRef.current);
+      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -233,13 +336,16 @@ export default function PrologueScreen({ onBegin, onSkip }) {
       <div
         className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at bottom, rgba(180,83,9,0.06) 0%, rgba(120,53,15,0.03) 35%, transparent 70%)',
+          background:
+            'radial-gradient(ellipse at bottom, rgba(180,83,9,0.06) 0%, rgba(120,53,15,0.03) 35%, transparent 70%)',
         }}
       />
 
-      <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
+      <div
+        className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 100%, rgba(245,158,11,0.04) 0%, transparent 70%)',
+          background:
+            'radial-gradient(ellipse at 50% 100%, rgba(245,158,11,0.04) 0%, transparent 70%)',
         }}
       />
 
@@ -252,7 +358,10 @@ export default function PrologueScreen({ onBegin, onSkip }) {
         </p>
         {!showBegin && (
           <button
-            onClick={(e) => { e.stopPropagation(); onSkip(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              skipAllTyping();
+            }}
             className="font-display text-[10px] tracking-wider text-amber-400/20 hover:text-amber-300/50 cursor-pointer transition-colors"
           >
             Skip
@@ -263,43 +372,48 @@ export default function PrologueScreen({ onBegin, onSkip }) {
       <div className="flex-1 flex items-center justify-center px-6 md:px-16 lg:px-32 z-10">
         <div className="w-full max-w-3xl space-y-10 md:space-y-14">
           {paragraphs.map((p, i) => {
-            const isVisible = visibleIndices.includes(i);
-            const isLatest = visibleIndices.length > 0 && i === visibleIndices[visibleIndices.length - 1];
+            const isDone = doneIndices.includes(i);
+            const isTyping = typingIndex === i;
+            const isHidden = !isDone && !isTyping;
+
+            if (isHidden) {
+              return <div key={i} className="min-h-[1em]" />;
+            }
+
+            const displayText = isTyping ? p.text.slice(0, Math.floor(typedLength)) : p.text;
+            const showCursor = isTyping && cursorVisible;
+            const isLatest = isTyping || (isDone && i === doneIndices[doneIndices.length - 1] && !allRevealed);
 
             return (
-              <div
-                key={i}
-                className={`transition-all duration-[1800ms] ease-out ${
-                  isVisible
-                    ? 'opacity-100 translate-y-0'
-                    : 'opacity-0 translate-y-6'
-                }`}
-              >
+              <div key={i}>
                 <p
-                  className={`font-serif leading-relaxed transition-all duration-[1200ms] ${
+                  className={`font-serif leading-relaxed text-lg md:text-xl ${
                     isLatest
-                      ? 'text-amber-200/90 text-lg md:text-xl'
-                      : isVisible
-                        ? 'text-amber-200/25 text-lg md:text-xl'
-                        : 'text-lg md:text-xl'
+                      ? 'text-amber-200/90'
+                      : 'text-amber-200/25'
                   }`}
-                  style={isLatest ? {
-                    textShadow: '0 0 12px rgba(245,158,11,0.25), 0 0 40px rgba(245,158,11,0.08)',
-                    animation: 'heatWaver 5s ease-in-out infinite',
-                  } : isVisible ? {
-                    textShadow: '0 0 4px rgba(245,158,11,0.08)',
-                  } : undefined}
+                  style={
+                    isLatest
+                      ? {
+                          textShadow: '0 0 12px rgba(245,158,11,0.25), 0 0 40px rgba(245,158,11,0.08)',
+                          animation: 'heatWaver 5s ease-in-out infinite',
+                        }
+                      : isDone
+                        ? { textShadow: '0 0 4px rgba(245,158,11,0.08)' }
+                        : undefined
+                  }
                 >
-                  {p.text}
+                  {displayText}
+                  <Cursor visible={showCursor} />
                 </p>
-                {p.subtitle && (
+                {p.subtitle && isDone && (
                   <p
-                    className={`font-display text-[10px] tracking-[0.25em] uppercase mt-4 transition-all duration-[1200ms] ${
-                      isVisible ? 'text-amber-400/45' : 'text-transparent'
-                    }`}
-                    style={isVisible && isLatest ? {
-                      animation: 'hearthPulse 3s ease-in-out infinite',
-                    } : undefined}
+                    className="font-display text-[10px] tracking-[0.25em] uppercase mt-4 text-amber-400/45"
+                    style={
+                      isLatest
+                        ? { animation: 'hearthPulse 3s ease-in-out infinite' }
+                        : undefined
+                    }
                   >
                     {p.subtitle}
                   </p>
@@ -312,7 +426,7 @@ export default function PrologueScreen({ onBegin, onSkip }) {
 
       {!allRevealed && (
         <div className="absolute bottom-10 left-0 right-0 text-center z-10">
-          <p className="font-serif text-[11px] text-amber-400/12 italic transition-opacity duration-[2500ms] animate-[hearthPulse_4s_ease-in-out_infinite]">
+          <p className="font-serif text-[11px] text-amber-400/12 italic animate-[hearthPulse_4s_ease-in-out_infinite]">
             {lines[atmosphericLine]}
           </p>
         </div>
@@ -321,21 +435,33 @@ export default function PrologueScreen({ onBegin, onSkip }) {
       {showBegin && (
         <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pb-14 z-10 animate-[fadeSlideUp_1s_ease-out]">
           <button
-            onClick={(e) => { e.stopPropagation(); onBegin(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onBegin();
+            }}
             className="group flex items-center gap-3 bg-amber-900/20 border border-amber-800/50 hover:border-amber-400 text-amber-200 px-12 py-5 rounded-lg font-display text-xl tracking-wider hover:scale-105 cursor-pointer transition-all duration-500"
             style={{
-              boxShadow: '0 0 20px rgba(180,83,9,0.2), 0 0 60px rgba(245,158,11,0.1)',
+              boxShadow:
+                '0 0 20px rgba(180,83,9,0.2), 0 0 60px rgba(245,158,11,0.1)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 30px rgba(245,158,11,0.4), 0 0 80px rgba(245,158,11,0.2)';
+              e.currentTarget.style.boxShadow =
+                '0 0 30px rgba(245,158,11,0.4), 0 0 80px rgba(245,158,11,0.2)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 20px rgba(180,83,9,0.2), 0 0 60px rgba(245,158,11,0.1)';
+              e.currentTarget.style.boxShadow =
+                '0 0 20px rgba(180,83,9,0.2), 0 0 60px rgba(245,158,11,0.1)';
             }}
           >
-            <Sword size={24} className="text-amber-400 group-hover:rotate-12 transition-transform duration-500" />
+            <Sword
+              size={24}
+              className="text-amber-400 group-hover:rotate-12 transition-transform duration-500"
+            />
             Begin Your Journey
-            <ChevronRight size={20} className="text-amber-400/40 group-hover:translate-x-1 transition-transform duration-300" />
+            <ChevronRight
+              size={20}
+              className="text-amber-400/40 group-hover:translate-x-1 transition-transform duration-300"
+            />
           </button>
           <p className="font-serif text-[11px] text-amber-400/15 italic mt-5">
             Press Enter to begin
