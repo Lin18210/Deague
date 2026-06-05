@@ -3,7 +3,8 @@ import { Sword, ChevronRight } from 'lucide-react';
 import { initialCharacter } from '../../data/initialCharacter';
 import { generateBackstory } from '../../services/aiService';
 
-const FALLBACK_PROLOGUE = [
+function getFallbackPrologue(char) {
+  return [
   {
     text: 'The Age of Ash has ended, but its scars remain.',
     subtitle: 'A hundred years after the Dragon Wars',
@@ -24,7 +25,8 @@ const FALLBACK_PROLOGUE = [
     text: 'Tonight, the road leads to the Crossroads Tavern. Its lanterns burn against the dark like a promise — or a warning. Inside, strangers swap rumors over tankards of ale. A hooded figure watches from the corner. A scarred half-orc tends the bar. And somewhere, a flickering candle casts a shadow that moves when no one is watching.',
     subtitle: 'The Crossroads Tavern — where all stories begin',
   },
-];
+  ];
+}
 
 const CHAR_DELAY_MS = 55;
 const PAUSE_DURATION = 2400;
@@ -125,7 +127,7 @@ export default function PrologueScreen({ onBegin, onSkip, character }) {
           if (parts.length >= 3) { setParagraphs(parts); setLoading(false); return; }
         }
       } catch {}
-      setParagraphs(FALLBACK_PROLOGUE);
+      setParagraphs(getFallbackPrologue(char));
       setLoading(false);
     }
     load();
