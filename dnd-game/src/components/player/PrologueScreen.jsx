@@ -83,7 +83,7 @@ function EmberSpark({ x, y }) {
 function FadeChar({ char, visible }) {
   return (
     <span className="inline transition-opacity duration-[350ms] ease-out" style={{ opacity: visible ? 1 : 0 }}>
-      {char === ' ' ? '\u00A0' : char}
+      {char}
     </span>
   );
 }
@@ -325,7 +325,7 @@ export default function PrologueScreen({ onBegin, onSkip }) {
 
               return (
                 <div key={i}>
-                  <p className={`font-serif leading-relaxed text-lg md:text-xl ${isLatest ? 'text-amber-200/90' : 'text-amber-200/25'}`}
+                  <p className={`font-serif leading-relaxed text-lg md:text-xl whitespace-pre-wrap break-words ${isLatest ? 'text-amber-200/90' : 'text-amber-200/25'}`}
                     style={isLatest
                       ? { textShadow: '0 0 12px rgba(245,158,11,0.25), 0 0 40px rgba(245,158,11,0.08)', animation: 'heatWaver 5s ease-in-out infinite' }
                       : isDone ? { textShadow: '0 0 4px rgba(245,158,11,0.08)' } : undefined}>
