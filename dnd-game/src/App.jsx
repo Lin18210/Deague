@@ -21,6 +21,23 @@ export default function App() {
     game.setScreen('combat');
   };
 
+  const handleUsePotion = (index) => {
+    const item = game.character.inventory[index];
+    if (!item) return;
+    const itemName = typeof item === 'string' ? item : item.name;
+    if (!itemName.toLowerCase().includes('potion') && !itemName.toLowerCase().includes('healing')) return;
+
+    const healAmount = Math.floor(Math.random() * 4 + 1) + Math.floor(Math.random() * 4 + 1) + 2;
+    const newHp = Math.min(game.character.health + healAmount, game.character.maxHealth);
+    game.updateCharacter({ health: newHp });
+
+    const newInventory = [...game.character.inventory];
+    newInventory.splice(index, 1);
+    game.updateCharacter({ inventory: newInventory });
+
+    game.addLog(`🧪 ${game.character.name} drinks a potion: +${healAmount} HP (${newHp}/${game.character.maxHealth})`);
+  };
+
   if (game.screen === 'prologue') {
     return (
       <PrologueScreen
@@ -59,6 +76,7 @@ export default function App() {
         onChoice={game.handlePlayerChoice}
         onReturn={() => game.setScreen('lobby')}
         onStartCombat={handlePlayerStartCombat}
+        onUsePotion={handleUsePotion}
       />
     );
   }

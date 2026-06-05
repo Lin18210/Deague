@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { rollD20, rollDice } from '../utils/diceUtils';
 import { getAbilityMod } from '../data/initialCharacter';
 import { generateCombatNarration } from '../services/aiService';
+import audio from '../utils/audioEngine';
 
 function doubleDice(notation) {
   const match = notation.match(/^(\d+)d(\d+)([+-]\d+)?$/);
@@ -51,6 +52,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
   }, [buildCombatContext]);
 
   const startCombat = useCallback((enemy) => {
+    audio.play('dice');
     const playerInit = rollD20(dexMod);
     const enemyInit = rollD20(enemy.dexMod || 2);
 
@@ -99,6 +101,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
         const doubled = doubleDice(enemy.damage);
         const critDamage = rollDice(doubled);
         const totalDamage = critDamage.total + enemy.damageMod;
+        audio.play('crit');
         const resultText = `CRITICAL HIT — ${critDamage.rolls.join('+')}+${enemy.damageMod}=${totalDamage} damage`;
 
         generateCombatNarration(
@@ -139,6 +142,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
         const damage = rollDice(enemy.damage);
         const totalDamage = Math.max(1, damage.total + enemy.damageMod);
         const resultText = `HIT — ${damage.rolls.join('+')}+${enemy.damageMod}=${totalDamage} damage`;
+        audio.play('fail');
 
         generateCombatNarration(
           enemy.name, 'attack', resultText, char.name, buildCombatContext()
@@ -189,6 +193,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
       const doubled = doubleDice(weapon.damage);
       const critDamage = rollDice(doubled);
       const totalDamage = critDamage.total + strMod + weapon.magic;
+      audio.play('crit');
       const resultText = `CRITICAL HIT — ${critDamage.rolls.join('+')}+${strMod + weapon.magic}=${totalDamage} damage`;
 
       narrateAction(character.name, `${weapon.name} strike`, resultText, combatState.enemy.name).then(n => {
@@ -221,6 +226,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
     }
 
     if (attackRoll.isFumble) {
+      audio.play('fail');
       logEntry = `❌ ${character.name} attacks with ${weapon.name}: rolled 1 — CRITICAL MISS! The swing goes wide.`;
       narrateAction(character.name, `${weapon.name} swing`, 'CRITICAL MISS', combatState.enemy.name).then(n => {
         if (n) setCombatNarration(n);
@@ -229,6 +235,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
       const damageRoll = rollDice(weapon.damage);
       const totalDamage = damageRoll.total + strMod + weapon.magic;
       const resultText = `HIT — ${damageRoll.rolls.join('+')}+${strMod + weapon.magic}=${totalDamage} damage`;
+      audio.play('hit');
 
       narrateAction(character.name, `${weapon.name}`, resultText, combatState.enemy.name).then(n => {
         if (n) setCombatNarration(n);
@@ -280,6 +287,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
     updateCharacter({ mana: character.mana - spell.manaCost });
 
     if (spell.autoHit) {
+      audio.play('magic');
       const damage = rollDice(spell.damage);
       const resultText = `Auto-hit — ${damage.rolls.join('+')}+${damage.modifier}=${damage.total} damage`;
 
@@ -312,6 +320,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
     }
 
     if (spell.effect) {
+      audio.play('magic');
       if (spell.effect === 'ac_boost') {
         const logEntry = `🛡️ ${character.name} casts ${spell.name}: +2 AC! Mana: ${character.mana - spell.manaCost}/${character.maxMana}`;
         addCombatLog(logEntry);
@@ -337,6 +346,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
     let logEntry;
 
     if (attackRoll.isCrit) {
+      audio.play('crit');
       const doubled = doubleDice(spell.damage);
       const critDamage = rollDice(doubled);
       const totalDamage = critDamage.total;
@@ -371,6 +381,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
     }
 
     if (attackRoll.isFumble) {
+      audio.play('fail');
       logEntry = `❌ ${character.name} casts ${spell.name}: rolled 1 — the spell fizzles out! Mana: ${character.mana - spell.manaCost}/${character.maxMana}`;
       narrateAction(character.name, spell.name, 'FUMBLE — spell fizzles', combatState.enemy.name).then(n => {
         if (n) setCombatNarration(n);
@@ -378,6 +389,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
     } else if (attackRoll.total >= combatState.enemy.ac) {
       const damage = rollDice(spell.damage);
       const resultText = `HIT — ${damage.rolls.join('+')}=${damage.total} damage`;
+      audio.play('magic');
 
       narrateAction(character.name, spell.name, resultText, combatState.enemy.name).then(n => {
         if (n) setCombatNarration(n);
@@ -419,6 +431,7 @@ export function useCombat(character, updateCharacter, addLog, onEndCombat, story
     setProcessing(true);
 
     const healAmount = rollDice('2d4+2').total;
+    audio.play('potion');
     const char = characterRef.current;
     const newHp = Math.min(char.health + healAmount, char.maxHealth);
     updateCharacter({ health: newHp });

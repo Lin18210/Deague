@@ -1,4 +1,4 @@
-import { Heart, Zap, Shield, Star, ScrollText } from 'lucide-react';
+import { Heart, Zap, Shield, Star, ScrollText, FlaskConical } from 'lucide-react';
 import { getAbilityMod } from '../../data/initialCharacter';
 
 function StatBar({ icon: Icon, label, current, max, color }) {
@@ -59,7 +59,7 @@ function ReputationBar({ reputation }) {
   );
 }
 
-export default function CharacterHUD({ character, combatActive, storyState }) {
+export default function CharacterHUD({ character, combatActive, storyState, onUsePotion }) {
   const stats = character.stats;
   const strMod = getAbilityMod(character, 'STR');
   const dexMod = getAbilityMod(character, 'DEX');
@@ -130,14 +130,37 @@ export default function CharacterHUD({ character, combatActive, storyState }) {
           Inventory
         </h4>
         <ul className="space-y-1">
-          {character.inventory.map((item, i) => (
-            <li
-              key={i}
-              className="text-sm text-amber-50/60 font-serif bg-slate-800/50 border border-amber-900/20 rounded px-3 py-1.5"
-            >
-              {item}
-            </li>
-          ))}
+          {character.inventory.map((item, i) => {
+            const isPotion = typeof item === 'string'
+              ? (item.toLowerCase().includes('potion') || item.toLowerCase().includes('healing'))
+              : item.type === 'potion';
+
+            const itemName = typeof item === 'string' ? item : item.name;
+
+            if (isPotion && onUsePotion) {
+              return (
+                <li key={i}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onUsePotion(i); }}
+                    className="w-full text-left text-sm text-green-300/80 font-serif bg-green-900/15 border border-green-700/20 hover:border-green-400 rounded px-3 py-1.5 cursor-pointer flex items-center gap-2 group transition-all"
+                  >
+                    <FlaskConical size={14} className="text-green-400 group-hover:scale-110 transition-transform" />
+                    <span>{itemName}</span>
+                    <span className="ml-auto text-[10px] text-green-400/60 group-hover:text-green-300">Drink</span>
+                  </button>
+                </li>
+              );
+            }
+
+            return (
+              <li
+                key={i}
+                className="text-sm text-amber-50/60 font-serif bg-slate-800/50 border border-amber-900/20 rounded px-3 py-1.5"
+              >
+                {itemName}
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>

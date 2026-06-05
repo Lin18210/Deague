@@ -16,6 +16,7 @@ export default function PlayerScreen({
   onChoice,
   onReturn,
   onStartCombat,
+  onUsePotion,
 }) {
   const [showCombatPrompt, setShowCombatPrompt] = useState(false);
 
@@ -96,7 +97,7 @@ export default function PlayerScreen({
           )}
         </div>
 
-        <CharacterHUD character={character} combatActive={false} storyState={storyState} />
+        <CharacterHUD character={character} combatActive={false} storyState={storyState} onUsePotion={onUsePotion} />
       </div>
     </div>
   );
