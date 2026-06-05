@@ -26,7 +26,7 @@ const FALLBACK_PROLOGUE = [
   },
 ];
 
-const WORD_DELAY_MS = 190;
+const CHAR_DELAY_MS = 55;
 const PAUSE_DURATION = 2400;
 
 const EMBER_COUNT = 28;
@@ -80,10 +80,10 @@ function EmberSpark({ x, y }) {
   );
 }
 
-function FadeWord({ word, visible }) {
+function FadeChar({ char, visible }) {
   return (
-    <span className="inline transition-opacity duration-[400ms] ease-out" style={{ opacity: visible ? 1 : 0 }}>
-      {word}
+    <span className="inline transition-opacity duration-[350ms] ease-out" style={{ opacity: visible ? 1 : 0 }}>
+      {char === ' ' ? '\u00A0' : char}
     </span>
   );
 }
@@ -96,33 +96,20 @@ export default function PrologueScreen({ onBegin, onSkip }) {
 
   const [doneIndices, setDoneIndices] = useState([]);
   const [revealIndex, setRevealIndex] = useState(-1);
-  const [visibleWordCount, setVisibleWordCount] = useState(0);
+  const [visibleCharCount, setVisibleCharCount] = useState(0);
   const [allRevealed, setAllRevealed] = useState(false);
   const [showBegin, setShowBegin] = useState(false);
 
   const engineRef = useRef({
     paraIdx: 0,
-    wordIdx: 0,
+    charIdx: 0,
     done: [],
-    wordsPerPara: [],
+    textsPerPara: [],
   });
   const timerRef = useRef(null);
   const allRevealedRef = useRef(false);
 
-  const paragraphWords = useMemo(() => {
-    return paragraphs.map((p) => {
-      const parts = p.text.split(/(\s+)/);
-      const words = [];
-      for (let i = 0; i < parts.length; i++) {
-        if (parts[i].trim() === '') {
-          if (words.length > 0) words[words.length - 1] += parts[i];
-        } else {
-          words.push(parts[i]);
-        }
-      }
-      return words;
-    });
-  }, [paragraphs]);
+  const paragraphTexts = useMemo(() => paragraphs.map((p) => p.text), [paragraphs]);
 
   useEffect(() => {
     let cancelled = false;
@@ -147,43 +134,43 @@ export default function PrologueScreen({ onBegin, onSkip }) {
   useEffect(() => {
     if (loading || paragraphs.length === 0) return;
     if (timerRef.current) clearTimeout(timerRef.current);
-    const wordLists = paragraphWords;
+    const texts = paragraphTexts;
     const eng = engineRef.current;
     eng.paraIdx = 0;
-    eng.wordIdx = 0;
+    eng.charIdx = 0;
     eng.done = [];
-    eng.wordsPerPara = wordLists;
+    eng.textsPerPara = texts;
     allRevealedRef.current = false;
     setDoneIndices([]);
     setRevealIndex(0);
-    setVisibleWordCount(0);
+    setVisibleCharCount(0);
     setAllRevealed(false);
     setShowBegin(false);
-  }, [paragraphs, loading]);
+  }, [paragraphs, loading, paragraphTexts]);
 
   useEffect(() => {
-    if (revealIndex < 0 || revealIndex >= paragraphWords.length) return;
+    if (revealIndex < 0 || revealIndex >= paragraphTexts.length) return;
 
     function tick() {
       const eng = engineRef.current;
-      const wordLists = eng.wordsPerPara;
+      const texts = eng.textsPerPara;
       const paraIdx = eng.paraIdx;
 
-      if (paraIdx >= wordLists.length) return;
+      if (paraIdx >= texts.length) return;
       if (allRevealedRef.current) return;
 
-      const words = wordLists[paraIdx];
-      const nextWordIdx = eng.wordIdx + 1;
+      const text = texts[paraIdx];
+      const nextCharIdx = eng.charIdx + 1;
 
-      if (nextWordIdx >= words.length) {
-        eng.wordIdx = words.length;
-        setVisibleWordCount(words.length);
+      if (nextCharIdx >= text.length) {
+        eng.charIdx = text.length;
+        setVisibleCharCount(text.length);
 
         const nextDone = [...eng.done, paraIdx];
         eng.done = nextDone;
         setDoneIndices(nextDone);
 
-        if (nextDone.length >= wordLists.length) {
+        if (nextDone.length >= texts.length) {
           allRevealedRef.current = true;
           setAllRevealed(true);
           return;
@@ -191,25 +178,25 @@ export default function PrologueScreen({ onBegin, onSkip }) {
 
         timerRef.current = setTimeout(() => {
           eng.paraIdx = paraIdx + 1;
-          eng.wordIdx = 0;
+          eng.charIdx = 0;
           setRevealIndex(eng.paraIdx);
-          setVisibleWordCount(0);
+          setVisibleCharCount(0);
           tick();
         }, PAUSE_DURATION);
         return;
       }
 
-      eng.wordIdx = nextWordIdx;
-      setVisibleWordCount(nextWordIdx);
-      timerRef.current = setTimeout(tick, WORD_DELAY_MS);
+      eng.charIdx = nextCharIdx;
+      setVisibleCharCount(nextCharIdx);
+      timerRef.current = setTimeout(tick, CHAR_DELAY_MS);
     }
 
-    timerRef.current = setTimeout(tick, WORD_DELAY_MS);
+    timerRef.current = setTimeout(tick, CHAR_DELAY_MS);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [revealIndex, paragraphWords]);
+  }, [revealIndex, paragraphTexts]);
 
   useEffect(() => {
     if (!allRevealed) return;
@@ -220,27 +207,27 @@ export default function PrologueScreen({ onBegin, onSkip }) {
   const skipAllTyping = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     allRevealedRef.current = true;
-    const allDone = paragraphWords.map((_, i) => i);
+    const allDone = paragraphTexts.map((_, i) => i);
     setDoneIndices(allDone);
     setRevealIndex(-1);
     setAllRevealed(true);
     setShowBegin(true);
-  }, [paragraphWords]);
+  }, [paragraphTexts]);
 
   const finishCurrentAndNext = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     const eng = engineRef.current;
-    const wordLists = eng.wordsPerPara;
+    const texts = eng.textsPerPara;
     const paraIdx = eng.paraIdx;
 
-    if (paraIdx >= wordLists.length) return;
+    if (paraIdx >= texts.length) return;
 
     const nextDone = [...eng.done, paraIdx];
     eng.done = nextDone;
     setDoneIndices(nextDone);
-    setVisibleWordCount(wordLists[paraIdx].length);
+    setVisibleCharCount(texts[paraIdx].length);
 
-    if (nextDone.length >= wordLists.length) {
+    if (nextDone.length >= texts.length) {
       allRevealedRef.current = true;
       setAllRevealed(true);
       return;
@@ -248,9 +235,9 @@ export default function PrologueScreen({ onBegin, onSkip }) {
 
     timerRef.current = setTimeout(() => {
       eng.paraIdx = paraIdx + 1;
-      eng.wordIdx = 0;
+      eng.charIdx = 0;
       setRevealIndex(eng.paraIdx);
-      setVisibleWordCount(0);
+      setVisibleCharCount(0);
     }, PAUSE_DURATION);
   }, []);
 
@@ -334,7 +321,7 @@ export default function PrologueScreen({ onBegin, onSkip }) {
 
               if (isHidden) return <div key={i} className="min-h-[1em]" />;
 
-              const words = paragraphWords[i] || [];
+              const chars = p.text.split('');
 
               return (
                 <div key={i}>
@@ -342,8 +329,8 @@ export default function PrologueScreen({ onBegin, onSkip }) {
                     style={isLatest
                       ? { textShadow: '0 0 12px rgba(245,158,11,0.25), 0 0 40px rgba(245,158,11,0.08)', animation: 'heatWaver 5s ease-in-out infinite' }
                       : isDone ? { textShadow: '0 0 4px rgba(245,158,11,0.08)' } : undefined}>
-                    {words.map((word, w) => (
-                      <FadeWord key={`${i}-${w}`} word={word} visible={isDone || (isRevealing && w < visibleWordCount)} />
+                    {chars.map((c, idx) => (
+                      <FadeChar key={idx} char={c} visible={isDone || (isRevealing && idx < visibleCharCount)} />
                     ))}
                   </p>
                   {p.subtitle && isDone && (
