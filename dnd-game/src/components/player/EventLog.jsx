@@ -1,10 +1,14 @@
 export default function EventLog({ entries }) {
+  if (!entries || entries.length === 0) return null;
+
   return (
-    <div className="bg-slate-900 border border-amber-900/30 rounded-lg p-6">
-      <h3 className="font-display text-lg text-amber-300 mb-4">Recent Events</h3>
-      <div className="max-h-40 overflow-y-auto space-y-2">
-        {entries.map((entry) => (
-          <p key={entry.id} className="text-amber-50/60 text-sm font-serif">
+    <div className="bg-stone-900/60 border border-stone-800 rounded-lg p-4">
+      <h3 className="text-[10px] text-stone-500 tracking-widest uppercase font-bold mb-2" style={{ fontFamily: 'system-ui, sans-serif' }}>
+        Chronicle
+      </h3>
+      <div className="max-h-32 overflow-y-auto scrollbar-parchment space-y-1.5">
+        {entries.slice(0, 20).map((entry) => (
+          <p key={entry.id} className="text-stone-400 text-[12px] font-serif leading-relaxed border-l-2 border-stone-800/60 pl-2">
             {entry.text}
           </p>
         ))}
