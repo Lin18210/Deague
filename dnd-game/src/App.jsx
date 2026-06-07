@@ -257,6 +257,7 @@ export default function App() {
   const [customAction, setCustomAction] = useState('');
   const [currentAiNode, setCurrentAiNode] = useState(null);
   const [apiError, setApiError] = useState(null);
+  const [aiPrologueParagraphs, setAiPrologueParagraphs] = useState(null);
 
   // Dice rolling state variables
   const [diceRolling, setDiceRolling] = useState(false);
@@ -305,9 +306,93 @@ export default function App() {
     playSoundEffect('click');
   };
 
+  const generateAiPrologue = async () => {
+    setIsAiLoading(true);
+    setApiError(null);
+    playSoundEffect('magic');
+
+    const userQuery = `The player is starting a dark fantasy campaign "Eldritch Ascent" as a ${CLASSES[selectedClass].name}.
+Generate a compelling 3-4 paragraph cinematic prologue backstory that explains why this adventurer is at the High Pass of the frozen mountain of Eldritch Ascent tonight.
+Include their class theme, a personal motivation for ascending the mountain, a past failure or regret, and a hint of the ancient malevolent force waking inside the mountain.
+Make it feel like the opening of an epic dark-fantasy novel.
+Return a JSON array of paragraphs, where each paragraph has:
+{
+  "text": "The narrative paragraph text...",
+  "subtitle": "A short dramatic phrase summarizing this paragraph (under 5 words)"
+}`;
+
+    const systemPrompt = `You are a master fantasy novelist and AI Dungeon Master.
+Your task is to write a highly immersive, cinematic prologue backstory in a dark-fantasy style.
+You MUST respond strictly with a valid JSON array matching this schema structure:
+[
+  {
+    "text": "Paragraph text...",
+    "subtitle": "A short dramatic subtitle"
+  }
+]`;
+
+    const payload = {
+      contents: [{ parts: [{ text: userQuery }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              text: { type: "STRING" },
+              subtitle: { type: "STRING" }
+            },
+            required: ["text", "subtitle"]
+          }
+        }
+      },
+      systemInstruction: { parts: [{ text: systemPrompt }] }
+    };
+
+    const activeKey = apiKey || import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || "";
+    if (!activeKey) {
+      setIsAiLoading(false);
+      setAiPrologueParagraphs(null);
+      setGameState('prologue');
+      return;
+    }
+
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${activeKey}`;
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error("API call failed");
+
+      const result = await response.json();
+      const rawJsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      const parsedParagraphs = JSON.parse(rawJsonText);
+      if (Array.isArray(parsedParagraphs) && parsedParagraphs.length > 0) {
+        setAiPrologueParagraphs(parsedParagraphs);
+      } else {
+        setAiPrologueParagraphs(null);
+      }
+    } catch (err) {
+      console.warn("Failed to generate AI prologue backstory, using fallback static prologue.", err);
+      setAiPrologueParagraphs(null);
+    } finally {
+      setIsAiLoading(false);
+      setGameState('prologue');
+    }
+  };
+
   const startGame = () => {
     playSoundEffect('success');
-    setGameState('prologue');
+    if (campaignMode === 'ai') {
+      generateAiPrologue();
+    } else {
+      setAiPrologueParagraphs(null);
+      setGameState('prologue');
+    }
   };
 
   const beginAdventureAfterPrologue = async () => {
@@ -998,10 +1083,22 @@ You MUST respond strictly with a valid JSON object matching this schema structur
 
               <button 
                 onClick={startGame}
-                className="mt-6 w-full py-4 bg-gradient-to-r from-amber-600 to-amber-800 text-stone-950 font-sans uppercase font-extrabold tracking-widest rounded-lg shadow-lg hover:from-amber-500 hover:to-amber-700 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                disabled={isAiLoading}
+                className={`mt-6 w-full py-4 bg-gradient-to-r from-amber-600 to-amber-800 text-stone-950 font-sans uppercase font-extrabold tracking-widest rounded-lg shadow-lg hover:from-amber-500 hover:to-amber-700 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  isAiLoading ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
               >
-                Assemble Adventure Gear & Enter the Pass
-                <ChevronRight className="w-5 h-5" />
+                {isAiLoading ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    Forging Backstory...
+                  </>
+                ) : (
+                  <>
+                    Assemble Adventure Gear & Enter the Pass
+                    <ChevronRight className="w-5 h-5" />
+                  </>
+                )}
               </button>
             </div>
 
@@ -1458,6 +1555,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
             class: CLASSES[selectedClass].name,
             weapons: CLASSES[selectedClass].inventory.filter(i => i.type === 'weapon')
           }}
+          paragraphs={aiPrologueParagraphs}
           onBegin={beginAdventureAfterPrologue}
           onSkip={beginAdventureAfterPrologue}
         />

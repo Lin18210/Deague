@@ -90,7 +90,7 @@ function FadeChar({ char, visible }) {
   );
 }
 
-export default function PrologueScreen({ onBegin, onSkip, character }) {
+export default function PrologueScreen({ onBegin, onSkip, character, paragraphs: propParagraphs }) {
   const char = character || initialCharacter;
   const [paragraphs, setParagraphs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -115,6 +115,11 @@ export default function PrologueScreen({ onBegin, onSkip, character }) {
   const paragraphTexts = useMemo(() => paragraphs.map((p) => p.text), [paragraphs]);
 
   useEffect(() => {
+    if (propParagraphs && propParagraphs.length > 0) {
+      setParagraphs(propParagraphs);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     async function load() {
       try {
@@ -132,7 +137,7 @@ export default function PrologueScreen({ onBegin, onSkip, character }) {
     }
     load();
     return () => { cancelled = true; };
-  }, []);
+  }, [propParagraphs]);
 
   useEffect(() => {
     if (loading || paragraphs.length === 0) return;
