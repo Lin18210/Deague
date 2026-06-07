@@ -1,4 +1,4 @@
-# 🏔️ Eldritch Ascent
+# 🏔️ Deague
 ### *An Interactive D&D Tabletop & AI Dungeon Master Campaign Engine*
 
 Eldritch Ascent is a premium web-based, text-driven RPG experience combining the traditional structures of D&D 5e tabletop gaming with the power of generative AI. Set in the freezing High Pass of a dark fantasy mountain, players choose a hero, manage stats and equipment, engage in tactical combat, and watch their story unfold under a dynamic narrative system.
