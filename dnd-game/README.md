@@ -73,5 +73,3 @@ An audio synthesis system driven by the Web Audio API that creates custom, conte
 
 ---
 
-## 📜 License
-Distributed under the MIT License. See `LICENSE` for more information.
