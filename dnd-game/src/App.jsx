@@ -273,6 +273,11 @@ export default function App() {
   const [activeCombatEffect, setActiveCombatEffect] = useState(''); 
 
   const textEndRef = useRef(null);
+  const activeCheckRef = useRef(null);
+
+  useEffect(() => {
+    activeCheckRef.current = activeCheck;
+  }, [activeCheck]);
 
   useEffect(() => {
     audio.setMuted(isMuted);
@@ -313,7 +318,7 @@ export default function App() {
     }
   };
 
-  const fetchNextAiNode = async (actionTaken, isSuccessRoll = null) => {
+  const fetchNextAiNode = async (actionTaken, isSuccessRoll = null, rollDetails = "") => {
     setIsAiLoading(true);
     setApiError(null);
     playSoundEffect('magic');
@@ -328,7 +333,7 @@ export default function App() {
     };
 
     const actionContext = isSuccessRoll !== null
-      ? `The player tried to perform a stat check: "${actionTaken}". Roll result was a ${isSuccessRoll ? 'SUCCESS' : 'FAILURE'}. Describe the aftermath.`
+      ? `The player tried to perform a stat check: "${actionTaken}".\nRoll detail description: ${rollDetails || `Roll result was a ${isSuccessRoll ? 'SUCCESS' : 'FAILURE'}`}.\nDescribe the aftermath of this check based on the success/failure.`
       : `The player chose to: "${actionTaken}".`;
 
     // Incorporate story journal history so the DM maintains context
@@ -597,20 +602,59 @@ You MUST respond strictly with a valid JSON object matching this schema structur
         
         setRollResultMsg(resultMsg);
         setDiceRolling(false);
+
+        // Auto resolve after 2.5 seconds
+        setTimeout(() => {
+          autoResolveCheck(passed, finalRoll, modifier, total);
+        }, 2500);
       }
     }, 70);
   };
 
-  const resolveCheck = () => {
-    playSoundEffect('click');
+  const autoResolveCheck = (passed, rollValue, modifierValue, totalValue) => {
+    if (!activeCheckRef.current) return;
+    
+    const checkObj = activeCheckRef.current;
+    setActiveCheck(null);
+    setRollResultMsg('');
+    
     if (campaignMode === 'ai') {
-      const parentAction = activeCheck.text || "risky path action";
-      setActiveCheck(null);
-      fetchNextAiNode(parentAction, rollSuccess);
+      const parentAction = checkObj.text || "risky path action";
+      const rollDetails = `Rolled a total of ${totalValue} (Base: ${rollValue}, Mod: ${modifierValue >= 0 ? '+' : ''}${modifierValue}) against DC ${checkObj.difficulty} for check: "${parentAction}".`;
+      fetchNextAiNode(parentAction, passed, rollDetails);
       setGameState('active');
     } else {
-      const nextNode = rollSuccess ? activeCheck.successNode : activeCheck.failNode;
-      setActiveCheck(null);
+      const nextNode = passed ? checkObj.successNode : checkObj.failNode;
+      advanceStory(nextNode);
+    }
+  };
+
+  const resolveCheck = () => {
+    if (!activeCheck) return;
+    playSoundEffect('click');
+    
+    const checkObj = activeCheck;
+    setActiveCheck(null);
+    setRollResultMsg('');
+    
+    let bonusFromEquipment = 0;
+    inventory.forEach(item => {
+      if (item.equipped && item.statBonus && item.statBonus[checkObj.stat]) {
+        bonusFromEquipment += item.statBonus[checkObj.stat];
+      }
+    });
+
+    const statScore = charStats[checkObj.stat] + bonusFromEquipment;
+    const modifier = Math.floor((statScore - 10) / 2);
+    const total = rolledValue + modifier;
+
+    if (campaignMode === 'ai') {
+      const parentAction = checkObj.text || "risky path action";
+      const rollDetails = `Rolled a total of ${total} (Base: ${rolledValue}, Mod: ${modifier >= 0 ? '+' : ''}${modifier}) against DC ${checkObj.difficulty} for check: "${parentAction}".`;
+      fetchNextAiNode(parentAction, rollSuccess, rollDetails);
+      setGameState('active');
+    } else {
+      const nextNode = rollSuccess ? checkObj.successNode : checkObj.failNode;
       advanceStory(nextNode);
     }
   };
