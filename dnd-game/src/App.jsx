@@ -27,6 +27,7 @@ import {
   FlaskConical
 } from 'lucide-react';
 import audio from './utils/audioEngine';
+import PrologueScreen from './components/player/PrologueScreen';
 
 const STYLE_INJECTION = `
 @keyframes float-up {
@@ -304,7 +305,12 @@ export default function App() {
     playSoundEffect('click');
   };
 
-  const startGame = async () => {
+  const startGame = () => {
+    playSoundEffect('success');
+    setGameState('prologue');
+  };
+
+  const beginAdventureAfterPrologue = async () => {
     playSoundEffect('success');
     setApiError(null);
     if (campaignMode === 'ai') {
@@ -1444,6 +1450,18 @@ You MUST respond strictly with a valid JSON object matching this schema structur
       <footer className="border-t border-stone-900/60 bg-stone-950 py-3 text-center text-[10px] text-stone-600 font-sans z-10 tracking-widest uppercase shrink-0">
         © Eldritch Ascent • Designed for Epic Campaigns & Tabletop Storytellers
       </footer>
+
+      {gameState === 'prologue' && (
+        <PrologueScreen
+          character={{
+            name: selectedClass === 'warrior' ? 'Vanguard' : selectedClass === 'mage' ? 'Aether Weaver' : 'Shadowstalker',
+            class: CLASSES[selectedClass].name,
+            weapons: CLASSES[selectedClass].inventory.filter(i => i.type === 'weapon')
+          }}
+          onBegin={beginAdventureAfterPrologue}
+          onSkip={beginAdventureAfterPrologue}
+        />
+      )}
     </div>
   );
 }
