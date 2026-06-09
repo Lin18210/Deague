@@ -83,7 +83,7 @@ const CLASSES = {
     icon: Sword,
     color: "from-amber-700 to-red-800",
     themeColor: "amber",
-    stats: { strength: 16, intelligence: 9, dexterity: 11, wisdom: 12 },
+    stats: { strength: 16, dexterity: 14, constitution: 15, intelligence: 10, wisdom: 12, charisma: 8 },
     hp: 34,
     mana: 4,
     inventory: [
@@ -98,8 +98,8 @@ const CLASSES = {
     icon: Sparkles,
     color: "from-purple-700 to-indigo-900",
     themeColor: "purple",
-    stats: { strength: 7, intelligence: 17, dexterity: 12, wisdom: 14 },
-    hp: 18,
+    stats: { strength: 7, dexterity: 12, constitution: 12, intelligence: 17, wisdom: 14, charisma: 11 },
+    hp: 20,
     mana: 28,
     inventory: [
       { id: "staff_1", name: "Aether Conduit Staff", desc: "Adds +2 to Intelligence Checks when equipped.", statBonus: { intelligence: 2 }, type: "weapon", equipped: true },
@@ -113,7 +113,7 @@ const CLASSES = {
     icon: Compass,
     color: "from-emerald-700 to-teal-900",
     themeColor: "emerald",
-    stats: { strength: 11, intelligence: 11, dexterity: 17, wisdom: 10 },
+    stats: { strength: 11, dexterity: 17, constitution: 13, intelligence: 11, wisdom: 10, charisma: 14 },
     hp: 24,
     mana: 10,
     inventory: [
@@ -208,7 +208,9 @@ const STORY_NODES = {
     text: "You descend deep into the tomb. The walls are carved with intricate murals of fallen elven lords and towering dragons. Suddenly, the shadows in the corner of the vault begin to coagulate. A beast made of pure darkness and purple embers—the legendary Shadow-Hound—leaps in front of you!",
     visualType: "battle",
     choices: [
-      { text: "Draw your weapon and engage the beast in active combat!", combatStart: true, nextNode: "battle_active" }
+      { text: "Draw your weapon and engage the beast in active combat!", combatStart: true, nextNode: "battle_active" },
+      { text: "[CHARISMA CHECK] Channel your inner authority and shout a command of banishment to intimidate the beast!", check: { stat: "charisma", difficulty: 14, successNode: "intimidate_success", failNode: "encounter_hound_fight" } },
+      { text: "[WISDOM CHECK] Read the hound's feral movements and use your empathy to pacify it.", check: { stat: "wisdom", difficulty: 14, successNode: "pacify_success", failNode: "encounter_hound_fight" } }
     ]
   },
   encounter_hound: {
@@ -216,7 +218,36 @@ const STORY_NODES = {
     text: "As you catch your breath, a menacing growl echoes from the shadows. Glowing purple eyes lock onto your location. It's a ravenous Shadow-Hound, spawned from the broken rift. It charges you immediately with bared fangs!",
     visualType: "battle",
     choices: [
-      { text: "Brace for combat and counter-attack!", combatStart: true, nextNode: "battle_active" }
+      { text: "Brace for combat and counter-attack!", combatStart: true, nextNode: "battle_active" },
+      { text: "[CHARISMA CHECK] Channel your inner authority and shout a command of banishment to intimidate the beast!", check: { stat: "charisma", difficulty: 14, successNode: "intimidate_success", failNode: "encounter_hound_fight" } },
+      { text: "[WISDOM CHECK] Read the hound's feral movements and use your empathy to pacify it.", check: { stat: "wisdom", difficulty: 14, successNode: "pacify_success", failNode: "encounter_hound_fight" } }
+    ]
+  },
+  intimidate_success: {
+    title: "The Beast Cowed",
+    text: "Your voice booms with supernatural authority, echoing off the ancient stone. The Shadow-Hound halts, its purple eyes widening in sudden fear. It whimpers and dissolves back into the shadows, leaving behind a glowing sapphire amulet!",
+    visualType: "arcane",
+    loot: { id: "amulet_1", name: "Sapphire Command Amulet", desc: "Adds +2 to Charisma Checks when equipped.", type: "weapon", statBonus: { charisma: 2 }, equipped: true },
+    choices: [
+      { text: "Claim the amulet and enter the under-empire (Complete Prologue).", nextNode: "epilogue" }
+    ]
+  },
+  pacify_success: {
+    title: "Shadow Bonded",
+    text: "You stand perfectly still, projecting calm and empathy. The hound's glowing eyes soften. It approaches slowly, sniffing your hand, before dissolving into a warm mist that wraps around your wrist, leaving behind a Ring of Empathy.",
+    visualType: "arcane",
+    loot: { id: "ring_1", name: "Ring of Empathy", desc: "Adds +2 to Wisdom Checks when equipped.", type: "weapon", statBonus: { wisdom: 2 }, equipped: true },
+    choices: [
+      { text: "Wear the ring and enter the under-empire (Complete Prologue).", nextNode: "epilogue" }
+    ]
+  },
+  encounter_hound_fight: {
+    title: "Feral Fury",
+    text: "The Shadow-Hound snarls, completely unfazed by your attempt. It lunges at you with renewed ferocity, grazing your shoulder!",
+    visualType: "battle",
+    damage: 4,
+    choices: [
+      { text: "Draw your weapon and engage the beast in active combat!", combatStart: true, nextNode: "battle_active" }
     ]
   },
   victory_node: {
@@ -458,7 +489,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
     { "text": "Take standard route" },
     { 
       "text": "Try something risky", 
-      "check": { "stat": "dexterity" | "intelligence" | "strength" | "wisdom", "difficulty": 12 } 
+      "check": { "stat": "strength" | "dexterity" | "constitution" | "intelligence" | "wisdom" | "charisma", "difficulty": 12 } 
     }
   ]
 }`;
@@ -486,9 +517,11 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                   type: "OBJECT",
                   properties: {
                     strength: { type: "INTEGER" },
-                    intelligence: { type: "INTEGER" },
                     dexterity: { type: "INTEGER" },
-                    wisdom: { type: "INTEGER" }
+                    constitution: { type: "INTEGER" },
+                    intelligence: { type: "INTEGER" },
+                    wisdom: { type: "INTEGER" },
+                    charisma: { type: "INTEGER" }
                   }
                 }
               },
@@ -504,7 +537,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                   check: {
                     type: "OBJECT",
                     properties: {
-                      stat: { type: "STRING", enum: ["strength", "intelligence", "dexterity", "wisdom"] },
+                      stat: { type: "STRING", enum: ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"] },
                       difficulty: { type: "INTEGER" }
                     },
                     required: ["stat", "difficulty"]
@@ -782,16 +815,20 @@ You MUST respond strictly with a valid JSON object matching this schema structur
 
     let strBonus = 0;
     let intBonus = 0;
+    let dexBonus = 0;
     inventory.forEach(item => {
       if (item.equipped && item.statBonus) {
         if (item.statBonus.strength) strBonus += item.statBonus.strength;
         if (item.statBonus.intelligence) intBonus += item.statBonus.intelligence;
+        if (item.statBonus.dexterity) dexBonus += item.statBonus.dexterity;
       }
     });
 
     if (action === 'strike') {
       playSoundEffect('hit');
-      const weaponModifier = Math.floor(((charStats.strength + strBonus) - 10) / 2);
+      const weaponModifier = selectedClass === 'rogue'
+        ? Math.floor(((charStats.dexterity + dexBonus) - 10) / 2)
+        : Math.floor(((charStats.strength + strBonus) - 10) / 2);
       playerDmg = Math.floor(Math.random() * 8) + 4 + weaponModifier;
       
       setActiveCombatEffect('shake-monster');
@@ -799,7 +836,9 @@ You MUST respond strictly with a valid JSON object matching this schema structur
 
       spawnDamagePopup(playerDmg, "enemy");
       setEnemyHp(prev => Math.max(0, prev - playerDmg));
-      combatLogMsg = `🛡️ You swung your blade at the beast, dealing ${playerDmg} physical damage!`;
+      combatLogMsg = selectedClass === 'rogue'
+        ? `🗡️ You lunged with your twin daggers, dealing ${playerDmg} finesse damage!`
+        : `🛡️ You swung your blade at the beast, dealing ${playerDmg} physical damage!`;
     } else if (action === 'spell') {
       if (mana < 6) {
         playSoundEffect('fail');
