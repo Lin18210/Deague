@@ -1584,7 +1584,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
       </main>
 
       <footer className="border-t border-stone-900/60 bg-stone-950 py-3 text-center text-[10px] text-stone-600 font-sans z-10 tracking-widest uppercase shrink-0">
-        © Eldritch Ascent • Designed for Epic Campaigns & Tabletop Storytellers
+        © Eldritch Ascent • Designed to evoke the spirit of classic tabletop RPGs with a modern twist. Crafted with care.
       </footer>
 
       {gameState === 'prologue' && (
