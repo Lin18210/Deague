@@ -197,3 +197,137 @@ h1, h2, h3, h4, h5, h6 {
 .scrollbar-parchment::-webkit-scrollbar { width: 5px; }
 .scrollbar-parchment::-webkit-scrollbar-track { background: rgba(28, 25, 23, 0.9); }
 .scrollbar-parchment::-webkit-scrollbar-thumb { background: rgba(217, 119, 6, 0.3); border-radius: 4px; }
+
+/* === D&D 5e Environment Visual Animations === */
+
+@keyframes torch-flicker {
+  0%, 100% { opacity: 0.7; filter: brightness(1); }
+  5% { opacity: 0.85; filter: brightness(1.15); }
+  10% { opacity: 0.65; filter: brightness(0.95); }
+  15% { opacity: 0.9; filter: brightness(1.1); }
+  25% { opacity: 0.75; filter: brightness(1.05); }
+  35% { opacity: 0.6; filter: brightness(0.9); }
+  45% { opacity: 0.88; filter: brightness(1.12); }
+  55% { opacity: 0.7; filter: brightness(1); }
+  65% { opacity: 0.82; filter: brightness(1.08); }
+  75% { opacity: 0.58; filter: brightness(0.88); }
+  85% { opacity: 0.92; filter: brightness(1.14); }
+  95% { opacity: 0.72; filter: brightness(0.98); }
+}
+
+@keyframes arcane-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes arcane-rotate-reverse {
+  0% { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes fog-drift {
+  0% { transform: translateX(-5%) translateY(0); opacity: 0.3; }
+  25% { transform: translateX(2%) translateY(-3%); opacity: 0.5; }
+  50% { transform: translateX(5%) translateY(1%); opacity: 0.35; }
+  75% { transform: translateX(-2%) translateY(-2%); opacity: 0.45; }
+  100% { transform: translateX(-5%) translateY(0); opacity: 0.3; }
+}
+
+@keyframes lightning-flash {
+  0%, 95%, 100% { opacity: 0; }
+  96% { opacity: 0.6; }
+  97% { opacity: 0.1; }
+  98% { opacity: 0.4; }
+  99% { opacity: 0; }
+}
+
+@keyframes crystal-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-8px) rotate(5deg); }
+  50% { transform: translateY(-3px) rotate(-3deg); }
+  75% { transform: translateY(-10px) rotate(2deg); }
+}
+
+@keyframes tendril-sway {
+  0%, 100% { transform: scaleY(1) translateX(0); }
+  30% { transform: scaleY(1.08) translateX(3px); }
+  60% { transform: scaleY(0.95) translateX(-2px); }
+}
+
+@keyframes rune-pulse {
+  0%, 100% { opacity: 0.3; filter: drop-shadow(0 0 2px currentColor); }
+  50% { opacity: 0.8; filter: drop-shadow(0 0 8px currentColor); }
+}
+
+@keyframes compass-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes map-marker-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(245,158,11,0.3); }
+  50% { box-shadow: 0 0 12px rgba(245,158,11,0.6), 0 0 24px rgba(245,158,11,0.2); }
+}
+
+@keyframes scene-fade-in {
+  from { opacity: 0; transform: scale(1.02); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spark-rise {
+  0% { transform: translateY(0) scale(1); opacity: 0.8; }
+  100% { transform: translateY(-60px) scale(0.3); opacity: 0; }
+}
+
+@keyframes energy-beam {
+  0%, 100% { opacity: 0.1; height: 30%; }
+  50% { opacity: 0.4; height: 70%; }
+}
+
+.animate-torch-flicker { animation: torch-flicker 3s ease-in-out infinite; }
+.animate-arcane-rotate { animation: arcane-rotate 20s linear infinite; }
+.animate-arcane-rotate-reverse { animation: arcane-rotate-reverse 15s linear infinite; }
+.animate-fog-drift { animation: fog-drift 12s ease-in-out infinite; }
+.animate-lightning-flash { animation: lightning-flash 8s ease-in-out infinite; }
+.animate-crystal-float { animation: crystal-float 6s ease-in-out infinite; }
+.animate-tendril-sway { animation: tendril-sway 4s ease-in-out infinite; }
+.animate-rune-pulse { animation: rune-pulse 2.5s ease-in-out infinite; }
+.animate-compass-spin { animation: compass-spin 60s linear infinite; }
+.animate-map-marker-pulse { animation: map-marker-pulse 2s ease-in-out infinite; }
+.animate-scene-fade-in { animation: scene-fade-in 0.8s ease-out forwards; }
+.animate-spark-rise { animation: spark-rise 1.5s ease-out forwards; }
+.animate-energy-beam { animation: energy-beam 3s ease-in-out infinite; }
+
+/* Parchment frame styling */
+.parchment-frame {
+  background:
+    linear-gradient(135deg, rgba(120, 53, 15, 0.08) 0%, transparent 50%),
+    linear-gradient(225deg, rgba(120, 53, 15, 0.05) 0%, transparent 50%),
+    linear-gradient(to bottom, rgba(28, 25, 23, 0.95), rgba(41, 37, 36, 0.9));
+  border: 1px solid rgba(180, 83, 9, 0.2);
+  box-shadow:
+    inset 0 0 30px rgba(0, 0, 0, 0.3),
+    0 0 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.parchment-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(180, 83, 9, 0.02) 2px,
+      rgba(180, 83, 9, 0.02) 4px
+    );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Scene transition crossfade */
+.scene-transition {
+  transition: opacity 0.6s ease-out, background 0.8s ease-out;
+}

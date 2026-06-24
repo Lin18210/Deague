@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import audio from './utils/audioEngine';
 import PrologueScreen from './components/player/PrologueScreen';
+import SceneIllustration from './components/player/SceneIllustration';
+import MiniMap from './components/player/MiniMap';
 
 const STYLE_INJECTION = `
 @keyframes float-up {
@@ -934,15 +936,31 @@ You MUST respond strictly with a valid JSON object matching this schema structur
     <div className={`min-h-screen bg-stone-950 text-stone-100 flex flex-col justify-between font-serif relative overflow-hidden select-none ${shakeScreen ? 'animate-shake-screen' : ''}`}>
       <style>{STYLE_INJECTION}</style>
 
-      {/* Campaign Particle Accents */}
-      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-orange-950/20 blur-[130px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-950/30 blur-[130px]" />
+      {/* Environment-Aware Ambient Background */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden scene-transition">
+        {/* Dynamic ambient glow based on visualType */}
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[130px] transition-colors duration-1000"
+          style={{
+            background: currentNode?.visualType === 'arcane'
+              ? 'rgba(88, 28, 135, 0.2)'
+              : currentNode?.visualType === 'battle'
+                ? 'rgba(127, 29, 29, 0.2)'
+                : 'rgba(120, 53, 15, 0.2)'
+          }} />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[130px] transition-colors duration-1000"
+          style={{
+            background: currentNode?.visualType === 'arcane'
+              ? 'rgba(67, 56, 202, 0.25)'
+              : currentNode?.visualType === 'battle'
+                ? 'rgba(153, 27, 27, 0.2)'
+                : 'rgba(88, 28, 135, 0.15)'
+          }} />
 
-        <div className="absolute bottom-0 left-[15%] w-1.5 h-1.5 bg-amber-500 rounded-full animate-float opacity-0" style={{ animationDelay: '0.1s', animationDuration: '4.2s' }} />
-        <div className="absolute bottom-0 left-[38%] w-2 h-2 bg-amber-600 rounded-full animate-float opacity-0" style={{ animationDelay: '1.4s', animationDuration: '5.6s' }} />
-        <div className="absolute bottom-0 left-[64%] w-1 h-1 bg-red-500 rounded-full animate-float opacity-0" style={{ animationDelay: '0.8s', animationDuration: '3.9s' }} />
-        <div className="absolute bottom-0 left-[83%] w-2.5 h-2.5 bg-amber-400 rounded-full animate-float opacity-0" style={{ animationDelay: '2.8s', animationDuration: '6.2s' }} />
+        {/* Floating embers — color shifts with environment */}
+        <div className="absolute bottom-0 left-[15%] w-1.5 h-1.5 rounded-full animate-float opacity-0 transition-colors duration-700" style={{ animationDelay: '0.1s', animationDuration: '4.2s', background: currentNode?.visualType === 'arcane' ? '#a78bfa' : currentNode?.visualType === 'battle' ? '#f87171' : '#f59e0b' }} />
+        <div className="absolute bottom-0 left-[38%] w-2 h-2 rounded-full animate-float opacity-0 transition-colors duration-700" style={{ animationDelay: '1.4s', animationDuration: '5.6s', background: currentNode?.visualType === 'arcane' ? '#818cf8' : currentNode?.visualType === 'battle' ? '#ef4444' : '#d97706' }} />
+        <div className="absolute bottom-0 left-[64%] w-1 h-1 rounded-full animate-float opacity-0 transition-colors duration-700" style={{ animationDelay: '0.8s', animationDuration: '3.9s', background: currentNode?.visualType === 'arcane' ? '#c4b5fd' : currentNode?.visualType === 'battle' ? '#dc2626' : '#ef4444' }} />
+        <div className="absolute bottom-0 left-[83%] w-2.5 h-2.5 rounded-full animate-float opacity-0 transition-colors duration-700" style={{ animationDelay: '2.8s', animationDuration: '6.2s', background: currentNode?.visualType === 'arcane' ? '#8b5cf6' : currentNode?.visualType === 'battle' ? '#b91c1c' : '#fbbf24' }} />
       </div>
 
       {/* Header Bar */}
@@ -1279,6 +1297,11 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                 ) : (
                   /* NARRATIVE SCENE READING AREA */
                   <>
+                    {/* Scene Illustration — D&D 5e style environment art */}
+                    {currentNode && (
+                      <SceneIllustration visualType={currentNode.visualType || 'hearth'} />
+                    )}
+
                     {journal.map((item, idx) => {
                       const isLast = idx === journal.length - 1;
                       return (
@@ -1530,6 +1553,12 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                   )}
                 </div>
               </div>
+
+              {/* D&D Mini-Map — Expedition Tracker */}
+              <MiniMap
+                journal={journal}
+                currentTitle={currentNode?.title || ''}
+              />
 
               {/* Character inventory screen */}
               <div className="bg-stone-900/40 border border-stone-800 rounded-xl p-5 flex flex-col shadow-2xl">

@@ -92,8 +92,54 @@ export default function CombatScreen({
   const isPlayerTurn = turn === 'player' && !processing;
 
   return (
-    <div className={`min-h-screen bg-slate-950 text-amber-50 flex flex-col ${shake === 'screen' ? 'animate-shake-screen' : ''}`}>
-      <header className="border-b border-red-900/30 bg-slate-900/80 px-6 py-4 flex items-center justify-between shrink-0">
+    <div className={`min-h-screen bg-slate-950 text-amber-50 flex flex-col relative overflow-hidden ${shake === 'screen' ? 'animate-shake-screen' : ''}`}>
+      {/* Battle Arena Backdrop */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        {/* Dungeon stone gradient */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #0f0808 0%, #1a0e0e 30%, #150a0a 60%, #0d0505 100%)' }} />
+
+        {/* Crimson ambient glow */}
+        <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full blur-[100px]" style={{ background: 'rgba(127, 29, 29, 0.15)' }} />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full blur-[100px]" style={{ background: 'rgba(153, 27, 27, 0.12)' }} />
+
+        {/* Torch glow — left */}
+        <div className="absolute top-20 left-4 animate-torch-flicker" style={{
+          width: 80, height: 80,
+          background: 'radial-gradient(circle, rgba(245,158,11,0.12) 0%, transparent 70%)',
+        }} />
+        {/* Torch glow — right */}
+        <div className="absolute top-20 right-4 animate-torch-flicker" style={{
+          width: 80, height: 80,
+          background: 'radial-gradient(circle, rgba(245,158,11,0.12) 0%, transparent 70%)',
+          animationDelay: '0.7s',
+        }} />
+
+        {/* Stone floor texture at bottom */}
+        <div className="absolute bottom-0 left-0 right-0" style={{
+          height: '20%',
+          background: `
+            linear-gradient(to top, rgba(28,20,16,0.9), transparent),
+            repeating-linear-gradient(90deg, transparent, transparent 80px, rgba(60,40,30,0.05) 80px, rgba(60,40,30,0.05) 81px)
+          `,
+        }} />
+
+        {/* Lightning flash overlay */}
+        <div className="absolute inset-0 bg-red-200 animate-lightning-flash" style={{ mixBlendMode: 'overlay', animationDuration: '12s' }} />
+
+        {/* Floating embers */}
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="absolute rounded-full animate-float opacity-0" style={{
+            left: `${10 + Math.random() * 80}%`,
+            bottom: '10%',
+            width: 2 + Math.random() * 2,
+            height: 2 + Math.random() * 2,
+            background: Math.random() > 0.5 ? '#f87171' : '#f59e0b',
+            animationDelay: `${Math.random() * 4}s`,
+            animationDuration: `${3 + Math.random() * 3}s`,
+          }} />
+        ))}
+      </div>
+      <header className="border-b border-red-900/30 bg-slate-900/80 backdrop-blur-md px-6 py-4 flex items-center justify-between shrink-0 relative z-10">
         <div>
           <h2 className="text-2xl font-display text-red-300">⚔️ COMBAT</h2>
           <p className="text-xs text-amber-50/40 font-serif">
@@ -117,7 +163,7 @@ export default function CombatScreen({
         </div>
       </header>
 
-      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden relative z-10">
         <div className="flex-1 p-6 overflow-y-auto space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-slate-900 border border-amber-900/20 rounded-lg p-6 relative">
