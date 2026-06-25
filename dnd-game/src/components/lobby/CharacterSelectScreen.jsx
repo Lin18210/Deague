@@ -1,9 +1,23 @@
 import { useState } from 'react';
-import { Sword, Sparkles, Eye, ChevronRight, Heart, Zap, Shield } from 'lucide-react';
+import { Sword, Sparkles, Eye, ChevronRight, Heart, Zap, Shield, Cross, Target, Star, Music, Flame, Leaf, Wind, Moon } from 'lucide-react';
 import { CLASS_PRESETS, CLASS_META, getAbilityMod } from '../../data/initialCharacter';
 import audio from '../../utils/audioEngine';
 
-const ICON_MAP = { shield: Shield, sparkles: Sparkles, eye: Eye, sword: Sword };
+const ICON_MAP = {
+  shield: Shield,
+  sparkles: Sparkles,
+  eye: Eye,
+  sword: Sword,
+  cross: Cross,
+  target: Target,
+  star: Star,
+  music: Music,
+  flame: Flame,
+  leaf: Leaf,
+  wind: Wind,
+  zap: Zap,
+  moon: Moon,
+};
 
 function StatPill({ label, base, char }) {
   const mod = getAbilityMod(char, label);
@@ -35,17 +49,16 @@ export default function CharacterSelectScreen({ onSelect }) {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-8">
-      <div className="w-full max-w-4xl space-y-8">
+      <div className="w-full max-w-5xl space-y-6">
         <div className="text-center space-y-2">
           <p className="text-amber-500 font-display tracking-[0.3em] text-xs uppercase">Chronicle Selection</p>
           <h2 className="text-3xl md:text-4xl font-display text-amber-200">Choose Your Paragon</h2>
           <p className="text-slate-400 text-sm font-serif max-w-xl mx-auto">
-            Each class shapes how you approach the world — crushing obstacles with raw power,
-            unraveling arcane mysteries, or slipping unseen through the shadows.
+            Twelve classes from the Forgotten Realms — each a different path to legend.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[52vh] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           {Object.entries(CLASS_PRESETS).map(([key, preset]) => {
             const presetMeta = CLASS_META[key];
             const PresetIcon = ICON_MAP[presetMeta.icon] || Sword;
@@ -55,41 +68,48 @@ export default function CharacterSelectScreen({ onSelect }) {
               <button
                 key={key}
                 onClick={() => { audio.play('click'); setSelected(key); }}
-                className={`text-left p-5 rounded-lg border transition-all duration-300 flex flex-col ${
+                className={`relative text-left p-4 rounded-lg border transition-all duration-300 flex flex-col overflow-hidden ${
                   isSelected
                     ? 'border-amber-600 bg-slate-900/90 shadow-lg shadow-amber-950/20 scale-[1.02]'
                     : 'border-slate-800 bg-slate-950/40 hover:border-slate-700 hover:bg-slate-900/30'
                 }`}
               >
+                {/* Color accent stripe */}
+                <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${presetMeta.color} opacity-${isSelected ? '80' : '30'} transition-opacity duration-300`} />
+
                 {isSelected && (
-                  <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${presetMeta.color} opacity-5 blur-xl pointer-events-none rounded-full`} />
+                  <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${presetMeta.color} opacity-5 blur-2xl pointer-events-none rounded-full`} />
                 )}
 
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`p-2 rounded-lg border ${isSelected ? 'border-amber-600/40 text-amber-500' : 'border-slate-800 text-slate-500'}`}>
-                    <PresetIcon size={20} />
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`p-1.5 rounded-md border ${
+                    isSelected ? 'border-amber-600/40 text-amber-500' : 'border-slate-800 text-slate-500'
+                  }`}>
+                    <PresetIcon size={16} />
                   </div>
-                  <h3 className={`font-display text-base ${isSelected ? 'text-amber-200' : 'text-slate-300'}`}>
+                  <h3 className={`font-display text-sm leading-tight ${
+                    isSelected ? 'text-amber-200' : 'text-slate-300'
+                  }`}>
                     {presetMeta.title}
                   </h3>
                 </div>
 
-                <p className="text-[11px] text-slate-400 font-serif mb-4 line-clamp-3 leading-relaxed">
+                <p className="text-[10px] text-slate-400 font-serif mb-3 line-clamp-2 leading-relaxed">
                   {presetMeta.desc}
                 </p>
 
-                <div className="mt-auto border-t border-slate-800/80 pt-3 grid grid-cols-3 gap-2 text-[10px]">
+                <div className="mt-auto border-t border-slate-800/80 pt-2 grid grid-cols-3 gap-1 text-[9px]">
                   <div className="flex items-center gap-1">
-                    <Heart size={10} className="text-red-400" />
+                    <Heart size={9} className="text-red-400" />
                     <span className="text-slate-500">{preset.maxHealth}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Zap size={10} className="text-blue-400" />
+                    <Zap size={9} className="text-blue-400" />
                     <span className="text-slate-500">{preset.maxMana}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Shield size={10} className="text-amber-400" />
-                    <span className="text-slate-500">AC {preset.ac}</span>
+                    <Shield size={9} className="text-amber-400" />
+                    <span className="text-slate-500">AC{preset.ac}</span>
                   </div>
                 </div>
               </button>

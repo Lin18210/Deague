@@ -24,7 +24,16 @@ import {
   Send,
   Sparkle,
   HelpCircle,
-  FlaskConical
+  FlaskConical,
+  Cross,
+  Target,
+  Star,
+  Music,
+  Leaf,
+  Wind,
+  Moon,
+  Zap,
+  Axe
 } from 'lucide-react';
 import audio from './utils/audioEngine';
 import PrologueScreen from './components/player/PrologueScreen';
@@ -121,6 +130,148 @@ const CLASSES = {
     inventory: [
       { id: "daggers_1", name: "Dual Silent Daggers", desc: "Adds +2 to Dexterity Checks when equipped.", statBonus: { dexterity: 2 }, type: "weapon", equipped: true },
       { id: "potion_1", name: "Elixir of Life", desc: "Consumable. Restores 15 HP immediately.", type: "potion", value: 15 }
+    ]
+  },
+  paladin: {
+    key: "paladin",
+    name: "Oathkeeper",
+    desc: "A holy warrior bound by sacred oath, channeling divine power to smite evil and shield the innocent.",
+    icon: Cross,
+    color: "from-yellow-600 to-amber-800",
+    themeColor: "yellow",
+    stats: { strength: 16, dexterity: 10, constitution: 14, intelligence: 10, wisdom: 12, charisma: 16 },
+    hp: 30,
+    mana: 18,
+    inventory: [
+      { id: "longsword_1", name: "Sacred Longsword", desc: "Adds +2 to Strength and Charisma Checks when equipped.", statBonus: { strength: 2, charisma: 2 }, type: "weapon", equipped: true },
+      { id: "potion_1", name: "Elixir of Life", desc: "Consumable. Restores 15 HP immediately.", type: "potion", value: 15 },
+      { id: "holysymbol_1", name: "Holy Symbol", desc: "Adds +1 to Charisma Checks while worn.", statBonus: { charisma: 1 }, type: "trinket", equipped: true }
+    ]
+  },
+  ranger: {
+    key: "ranger",
+    name: "Wildstrider",
+    desc: "A hunter of the wilds, striking from a distance with deadly precision and primal survival instincts.",
+    icon: Target,
+    color: "from-green-700 to-emerald-900",
+    themeColor: "green",
+    stats: { strength: 13, dexterity: 17, constitution: 14, intelligence: 11, wisdom: 14, charisma: 10 },
+    hp: 26,
+    mana: 14,
+    inventory: [
+      { id: "bow_1", name: "Longbow of the Forest", desc: "Adds +2 to Dexterity Checks when equipped.", statBonus: { dexterity: 2 }, type: "weapon", equipped: true },
+      { id: "potion_1", name: "Elixir of Life", desc: "Consumable. Restores 15 HP immediately.", type: "potion", value: 15 },
+      { id: "trap_1", name: "Hunting Trap", desc: "Can be placed to immobilize enemies.", type: "tool", equipped: false }
+    ]
+  },
+  cleric: {
+    key: "cleric",
+    name: "Divine Herald",
+    desc: "A vessel of divine magic, healing allies and smiting foes with sacred flames granted by the gods.",
+    icon: Star,
+    color: "from-sky-600 to-blue-900",
+    themeColor: "sky",
+    stats: { strength: 13, dexterity: 10, constitution: 14, intelligence: 12, wisdom: 17, charisma: 13 },
+    hp: 26,
+    mana: 24,
+    inventory: [
+      { id: "mace_1", name: "Sacred Mace", desc: "Adds +1 to Strength and Wisdom Checks when equipped.", statBonus: { strength: 1, wisdom: 1 }, type: "weapon", equipped: true },
+      { id: "potion_1", name: "Elixir of Life", desc: "Consumable. Restores 15 HP immediately.", type: "potion", value: 15 },
+      { id: "symbol_1", name: "Holy Symbol of Lathander", desc: "Adds +2 to Wisdom Checks while worn.", statBonus: { wisdom: 2 }, type: "trinket", equipped: true }
+    ]
+  },
+  bard: {
+    key: "bard",
+    name: "Maestro",
+    desc: "A silver-tongued performer who weaves magic through music, inspiring allies and bewildering foes.",
+    icon: Music,
+    color: "from-pink-700 to-rose-900",
+    themeColor: "pink",
+    stats: { strength: 9, dexterity: 14, constitution: 13, intelligence: 13, wisdom: 11, charisma: 18 },
+    hp: 22,
+    mana: 22,
+    inventory: [
+      { id: "lute_1", name: "Lute of Sharpness", desc: "Adds +2 to Charisma Checks when equipped.", statBonus: { charisma: 2 }, type: "weapon", equipped: true },
+      { id: "potion_1", name: "Elixir of Life", desc: "Consumable. Restores 15 HP immediately.", type: "potion", value: 15 },
+      { id: "scroll_1", name: "Spellbook of Songs", desc: "Adds +1 to Intelligence Checks while carried.", statBonus: { intelligence: 1 }, type: "tool", equipped: false }
+    ]
+  },
+  barbarian: {
+    key: "barbarian",
+    name: "Berserker",
+    desc: "A primal warrior who channels fury into devastating combat, shrugging off wounds that would fell others.",
+    icon: Flame,
+    color: "from-red-700 to-orange-900",
+    themeColor: "red",
+    stats: { strength: 18, dexterity: 14, constitution: 17, intelligence: 7, wisdom: 10, charisma: 8 },
+    hp: 42,
+    mana: 4,
+    inventory: [
+      { id: "axe_1", name: "Greataxe of Fury", desc: "Adds +3 to Strength Checks when equipped.", statBonus: { strength: 3 }, type: "weapon", equipped: true },
+      { id: "potion_1", name: "Elixir of Life", desc: "Consumable. Restores 15 HP immediately.", type: "potion", value: 15 }
+    ]
+  },
+  druid: {
+    key: "druid",
+    name: "Shapeshifter",
+    desc: "A guardian of nature who commands the elements and transforms into beasts to overwhelm enemies.",
+    icon: Leaf,
+    color: "from-lime-700 to-green-900",
+    themeColor: "lime",
+    stats: { strength: 10, dexterity: 13, constitution: 13, intelligence: 13, wisdom: 17, charisma: 12 },
+    hp: 22,
+    mana: 22,
+    inventory: [
+      { id: "staff_1", name: "Thornwood Staff", desc: "Adds +2 to Wisdom Checks when equipped.", statBonus: { wisdom: 2 }, type: "weapon", equipped: true },
+      { id: "potion_1", name: "Elixir of Life", desc: "Consumable. Restores 15 HP immediately.", type: "potion", value: 15 },
+      { id: "focus_1", name: "Druidic Focus", desc: "Adds +1 to Wisdom Checks while carried.", statBonus: { wisdom: 1 }, type: "trinket", equipped: false }
+    ]
+  },
+  monk: {
+    key: "monk",
+    name: "Way of Shadow",
+    desc: "A disciplined martial artist who harnesses Ki energy to strike with supernatural speed and precision.",
+    icon: Wind,
+    color: "from-cyan-700 to-slate-800",
+    themeColor: "cyan",
+    stats: { strength: 12, dexterity: 17, constitution: 14, intelligence: 12, wisdom: 16, charisma: 9 },
+    hp: 24,
+    mana: 16,
+    inventory: [
+      { id: "kama_1", name: "Kama of the Wind", desc: "Adds +2 to Dexterity Checks when equipped.", statBonus: { dexterity: 2 }, type: "weapon", equipped: true },
+      { id: "potion_1", name: "Elixir of Life", desc: "Consumable. Restores 15 HP immediately.", type: "potion", value: 15 },
+      { id: "crystal_1", name: "Meditation Crystal", desc: "Adds +1 to Wisdom Checks while carried.", statBonus: { wisdom: 1 }, type: "trinket", equipped: false }
+    ]
+  },
+  sorcerer: {
+    key: "sorcerer",
+    name: "Stormcaller",
+    desc: "A spellcaster of raw arcane bloodline, bending reality through sheer force of will and innate charisma.",
+    icon: Zap,
+    color: "from-violet-700 to-purple-900",
+    themeColor: "violet",
+    stats: { strength: 7, dexterity: 13, constitution: 13, intelligence: 14, wisdom: 10, charisma: 18 },
+    hp: 18,
+    mana: 30,
+    inventory: [
+      { id: "wand_1", name: "Crystal Wand", desc: "Adds +2 to Charisma and Intelligence Checks when equipped.", statBonus: { charisma: 2, intelligence: 2 }, type: "weapon", equipped: true },
+      { id: "potion_1", name: "Elixir of Life", desc: "Consumable. Restores 15 HP immediately.", type: "potion", value: 15 }
+    ]
+  },
+  warlock: {
+    key: "warlock",
+    name: "Hexblade",
+    desc: "A pact-bound conduit of dark power, wielding eldritch forces granted by an otherworldly patron.",
+    icon: Moon,
+    color: "from-slate-700 to-gray-900",
+    themeColor: "slate",
+    stats: { strength: 10, dexterity: 13, constitution: 13, intelligence: 13, wisdom: 11, charisma: 17 },
+    hp: 22,
+    mana: 12,
+    inventory: [
+      { id: "blade_1", name: "Pact Blade", desc: "Adds +2 to Charisma Checks when equipped.", statBonus: { charisma: 2 }, type: "weapon", equipped: true },
+      { id: "potion_1", name: "Elixir of Life", desc: "Consumable. Restores 15 HP immediately.", type: "potion", value: 15 },
+      { id: "tome_1", name: "Tome of the Forgotten", desc: "Adds +1 to Intelligence Checks while carried.", statBonus: { intelligence: 1 }, type: "tool", equipped: false }
     ]
   }
 };
@@ -1102,7 +1253,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[50vh] overflow-y-auto pr-1">
                 {Object.entries(CLASSES).map(([key, data]) => {
                   const IconComp = data.icon;
                   const isSelected = selectedClass === key;
