@@ -1584,7 +1584,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                       <div className="text-center space-y-1">
                         <span className="text-[11px] font-sans tracking-widest text-purple-400 font-bold uppercase">Critical Venture</span>
                         <h4 className="text-lg font-bold font-sans text-stone-200">
-                          {activeCheck.stat.toUpperCase()} Check required!
+                          {activeCheck.stat.toUpperCase()} Check Required!
                         </h4>
                         <p className="text-xs font-sans text-stone-400">
                           Difficulty Class (DC): <span className="text-purple-400 font-bold">{activeCheck.difficulty}</span>
