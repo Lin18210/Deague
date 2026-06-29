@@ -367,7 +367,7 @@ const STORY_NODES = {
     title: "Arcane Backlash",
     text: "A sharp hum sounds in your ears, followed by a shocking blue bolt of lightning that shoots out from the wall. The magic shocks your core, draining your physical energy as the chamber walls begin to buckle.",
     visualType: "arcane",
-    damage: 10,
+    damage: 8,
     choices: [
       { text: "Flee down the stairs to escape the collapsing chamber.", nextNode: "encounter_hound" }
     ]
