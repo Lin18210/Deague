@@ -39,6 +39,7 @@ import audio from './utils/audioEngine';
 import PrologueScreen from './components/player/PrologueScreen';
 import SceneIllustration from './components/player/SceneIllustration';
 import MiniMap from './components/player/MiniMap';
+import { rollDice, rollD20 } from './utils/diceUtils';
 
 const STYLE_INJECTION = `
 @keyframes float-up {
@@ -74,6 +75,36 @@ const STYLE_INJECTION = `
   30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
   40%, 60% { transform: translate3d(6px, 0, 0); }
 }
+@keyframes red-flash {
+  0% { opacity: 0; }
+  10% { opacity: 0.45; }
+  100% { opacity: 0; }
+}
+@keyframes green-flash {
+  0% { opacity: 0; }
+  15% { opacity: 0.35; }
+  100% { opacity: 0; }
+}
+@keyframes purple-flash {
+  0% { opacity: 0; }
+  15% { opacity: 0.35; }
+  100% { opacity: 0; }
+}
+@keyframes player-strike {
+  0% { transform: scale(1) translate(0, 0); }
+  30% { transform: scale(1.08) translate(30px, -15px) rotate(8deg); }
+  100% { transform: scale(1) translate(0, 0); }
+}
+@keyframes monster-strike {
+  0% { transform: scale(1) translate(0, 0); }
+  30% { transform: scale(1.08) translate(-30px, 15px) rotate(-8deg); }
+  100% { transform: scale(1) translate(0, 0); }
+}
+@keyframes monster-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
 .animate-float { animation: float-up 3.5s ease-out infinite; }
 .animate-glow { animation: campfire-glow 2s ease-in-out infinite; }
 .animate-ring { animation: pulse-ring 3s cubic-bezier(0.215, 0.610, 0.355, 1) infinite; }
@@ -81,6 +112,12 @@ const STYLE_INJECTION = `
 .animate-ink-bleed { animation: ink-bleed 1s ease-out forwards; }
 .animate-damage { animation: damage-pop 0.8s ease-out forwards; }
 .animate-shake-screen { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+.animate-red-flash { animation: red-flash 0.5s ease-out forwards; }
+.animate-green-flash { animation: green-flash 0.6s ease-out forwards; }
+.animate-purple-flash { animation: purple-flash 0.6s ease-out forwards; }
+.animate-player-strike { animation: player-strike 0.35s ease-in-out forwards; }
+.animate-monster-strike { animation: monster-strike 0.35s ease-in-out forwards; }
+.animate-monster-shake { animation: monster-shake 0.35s cubic-bezier(.36,.07,.19,.97) both; }
 .scrollbar-parchment::-webkit-scrollbar { width: 5px; }
 .scrollbar-parchment::-webkit-scrollbar-track { background: rgba(28, 25, 23, 0.9); }
 .scrollbar-parchment::-webkit-scrollbar-thumb { background: rgba(217, 119, 6, 0.3); border-radius: 4px; }
@@ -437,6 +474,60 @@ const STORY_NODES = {
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
+const getClassAC = (className) => {
+  const acMap = {
+    warrior: 18,
+    mage: 14,
+    rogue: 16,
+    paladin: 19,
+    ranger: 16,
+    cleric: 17,
+    bard: 15,
+    barbarian: 15,
+    druid: 15,
+    monk: 17,
+    sorcerer: 14,
+    warlock: 16
+  };
+  return acMap[className] || 15;
+};
+
+const getClassWeaponDamage = (className) => {
+  const damageMap = {
+    warrior: '1d10',
+    mage: '1d6',
+    rogue: '1d6',
+    paladin: '1d8',
+    ranger: '1d8',
+    cleric: '1d6',
+    bard: '1d6',
+    barbarian: '1d12',
+    druid: '1d6',
+    monk: '1d6',
+    sorcerer: '1d4',
+    warlock: '1d8'
+  };
+  return damageMap[className] || '1d8';
+};
+
+const getClassKeyStat = (className) => {
+  const statMap = {
+    warrior: 'strength',
+    mage: 'intelligence',
+    rogue: 'dexterity',
+    paladin: 'strength',
+    ranger: 'dexterity',
+    cleric: 'wisdom',
+    bard: 'charisma',
+    barbarian: 'strength',
+    druid: 'wisdom',
+    monk: 'dexterity',
+    sorcerer: 'charisma',
+    warlock: 'charisma'
+  };
+  return statMap[className] || 'strength';
+};
+
 export default function App() {
   const [gameState, setGameState] = useState('character-select'); 
   const [selectedClass, setSelectedClass] = useState('warrior');
@@ -469,12 +560,22 @@ export default function App() {
 
   // Combat systems
   const [enemyHp, setEnemyHp] = useState(40);
-  const [maxEnemyHp] = useState(40);
+  const [maxEnemyHp, setMaxEnemyHp] = useState(40);
   const [combatLog, setCombatLog] = useState([]);
   const [damagePopups, setDamagePopups] = useState([]); 
   const [activeCombatEffect, setActiveCombatEffect] = useState('');
   // Active combat buffs: { battleCry, rage, huntersMarkActive, bardDebuff, stunned }
   const [combatBuffs, setCombatBuffs] = useState({ battleCry: false, rage: false, huntersMarkActive: false, bardDebuff: false, enemyStunned: false });
+  
+  // Refactored immersive combat states
+  const [combatPhase, setCombatPhase] = useState('select-action'); // 'initiative-roll' | 'select-action' | 'player-roll' | 'player-resolve' | 'enemy-wait' | 'enemy-roll' | 'enemy-resolve'
+  const [combatDiceType, setCombatDiceType] = useState('attack'); // 'attack' | 'damage' | 'dodge' | 'initiative'
+  const [combatRollDetails, setCombatRollDetails] = useState(''); // E.g. "Attack roll: 1d20 + STR (+3)"
+  const [combatRollDC, setCombatRollDC] = useState(0); // target AC or check DC
+  const [activeFlashEffect, setActiveFlashEffect] = useState(''); // 'red' | 'green' | 'purple' | ''
+  const [isPlayerAttacking, setIsPlayerAttacking] = useState(false);
+  const [isEnemyAttacking, setIsEnemyAttacking] = useState(false);
+  const [enemyStats, setEnemyStats] = useState({ name: 'Shadow-Hound', ac: 14, attackMod: 4, damage: '1d6+3', dexMod: 2 });
 
   const textEndRef = useRef(null);
   const activeCheckRef = useRef(null);
@@ -797,8 +898,11 @@ You MUST respond strictly with a valid JSON object matching this schema structur
       setRollResultMsg('');
     } else if (choice.combatStart) {
       setGameState('combat');
+      setCombatPhase('initiative-roll');
       setEnemyHp(40);
-      setCombatLog(["A menacing Shadow-Hound emerges from the dark. Prepare to fight!"]);
+      setEnemyStats({ name: 'Shadow-Hound', ac: 14, attackMod: 4, damage: '1d6+3', dexMod: 2 });
+      setCombatRollDetails('Initiative Check: Click "Roll Initiative" to start combat.');
+      setCombatLog(["⚔️ A menacing Shadow-Hound emerges from the dark. Roll Initiative to begin!"]);
     } else {
       if (campaignMode === 'ai') {
         fetchNextAiNode(choice.text);
@@ -957,12 +1061,18 @@ You MUST respond strictly with a valid JSON object matching this schema structur
   const useInventoryItem = (item) => {
     playSoundEffect('click');
     if (item.type === 'potion') {
-      setHp(prev => Math.min(maxHp, prev + item.value));
+      const healAmt = item.value;
+      setHp(prev => Math.min(maxHp, prev + healAmt));
       setInventory(prev => prev.filter(i => i.id !== item.id));
       playSoundEffect('success');
       
+      // visual green flash and heal popup
+      setActiveFlashEffect('green');
+      setTimeout(() => setActiveFlashEffect(''), 550);
+      spawnDamagePopup(`+${healAmt}`, 'player', 'heal');
+      
       if (gameState === 'combat') {
-        setCombatLog(prev => [`Consumed ${item.name} and healed for ${item.value} HP.`, ...prev]);
+        setCombatLog(prev => [`🧪 Consumed ${item.name} and healed for ${healAmt} HP.`, ...prev]);
       }
     } else if (item.type === 'weapon') {
       setInventory(prev => prev.map(i => {
@@ -977,19 +1087,233 @@ You MUST respond strictly with a valid JSON object matching this schema structur
     }
   };
 
-  const executeCombatAction = (action) => {
+  const spawnDamagePopup = (text, target, type = 'damage') => {
+    const id = Math.random().toString();
+    let color = 'text-red-500 font-bold';
+    let textVal = text.toString();
+    if (!textVal.startsWith('-') && !textVal.startsWith('+') && !isNaN(textVal)) {
+      textVal = `-${textVal}`;
+    }
+    
+    if (target === 'enemy') {
+      if (type === 'crit') color = 'text-yellow-400 font-black text-2xl drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]';
+      else if (type === 'miss') { color = 'text-stone-400 font-medium italic'; textVal = text; }
+      else color = 'text-purple-400 font-extrabold';
+    } else {
+      if (type === 'heal') color = 'text-emerald-400 font-bold text-lg';
+      else if (type === 'dodge') { color = 'text-teal-300 font-semibold italic'; textVal = text; }
+      else if (type === 'miss') { color = 'text-stone-400 font-medium italic'; textVal = text; }
+      else color = 'text-red-500 font-bold';
+    }
+    
+    const newPopup = {
+      id,
+      text: textVal,
+      color: `${color} shadow-black/85`
+    };
+    setDamagePopups(prev => [...prev, newPopup]);
+    setTimeout(() => {
+      setDamagePopups(prev => prev.filter(p => p.id !== id));
+    }, 900);
+  };
+
+  const rollCombatInitiative = () => {
+    if (diceRolling) return;
+    
+    setDiceRolling(true);
+    setCombatPhase('initiative-roll');
+    setCombatDiceType('initiative');
+    setCombatRollDetails(`Initiative Roll: 1d20 + DEX Mod`);
+    
+    let counter = 0;
+    const interval = setInterval(() => {
+      playSoundEffect('dice');
+      setRolledValue(Math.floor(Math.random() * 20) + 1);
+      counter++;
+      
+      if (counter > 10) {
+        clearInterval(interval);
+        
+        const playerRoll = Math.floor(Math.random() * 20) + 1;
+        setRolledValue(playerRoll);
+        
+        let dexBonus = 0;
+        inventory.forEach(item => {
+          if (item.equipped && item.statBonus && item.statBonus.dexterity) {
+            dexBonus += item.statBonus.dexterity;
+          }
+        });
+        const dexMod = Math.floor(((charStats.dexterity + dexBonus) - 10) / 2);
+        const playerTotal = playerRoll + dexMod;
+        
+        const enemyRoll = Math.floor(Math.random() * 20) + 1;
+        const enemyTotal = enemyRoll + enemyStats.dexMod;
+        
+        const playerWon = playerTotal >= enemyTotal;
+        
+        setDiceRolling(false);
+        playSoundEffect(playerWon ? 'success' : 'fail');
+        
+        const logMsg = `🎲 Initiative: You rolled ${playerRoll} + (${dexMod >= 0 ? '+' : ''}${dexMod}) = ${playerTotal} | ${enemyStats.name} rolled ${enemyRoll} + (${enemyStats.dexMod}) = ${enemyTotal}.`;
+        const outcomeMsg = playerWon ? `⚔️ You reacted faster! Your turn begins.` : `👹 ${enemyStats.name} surged forward first!`;
+        
+        setCombatLog(prev => [outcomeMsg, logMsg, ...prev]);
+        setRollSuccess(playerWon);
+        setCombatRollDetails(`Initiative result: You (${playerTotal}) vs ${enemyStats.name} (${enemyTotal}). ${playerWon ? 'You go first!' : 'Enemy goes first!'}`);
+        
+        setTimeout(() => {
+          if (playerWon) {
+            setCombatPhase('select-action');
+            setCombatRollDetails('Your turn! Select a combat command.');
+          } else {
+            setCombatPhase('enemy-wait');
+            triggerEnemyRetaliation();
+          }
+        }, 2200);
+      }
+    }, 75);
+  };
+
+  const triggerEnemyRetaliation = (wasDodging = false, dodgeDexMod = 0) => {
     if (enemyHp <= 0 || hp <= 0) return;
+    
+    setCombatPhase('enemy-wait');
+    setCombatRollDetails(`${enemyStats.name} is preparing to strike...`);
+    
+    if (combatBuffs.enemyStunned) {
+      setCombatBuffs(prev => ({ ...prev, enemyStunned: false }));
+      setTimeout(() => {
+        setCombatLog(prev => [`🌀 The stunned ${enemyStats.name} shakes its head, losing its action!`, ...prev]);
+        setCombatPhase('select-action');
+        setCombatRollDetails('Your turn! Select a combat command.');
+      }, 1500);
+      return;
+    }
+    
+    setTimeout(() => {
+      if (hp <= 0) return;
+      
+      setCombatPhase('enemy-roll');
+      setCombatDiceType('attack');
+      setCombatRollDetails(`${enemyStats.name} Attack: 1d20 + Attack Mod (+${enemyStats.attackMod})`);
+      
+      let counter = 0;
+      const interval = setInterval(() => {
+        playSoundEffect('dice');
+        setRolledValue(Math.floor(Math.random() * 20) + 1);
+        counter++;
+        
+        if (counter > 10) {
+          clearInterval(interval);
+          
+          const finalRoll = Math.floor(Math.random() * 20) + 1;
+          setRolledValue(finalRoll);
+          
+          const totalAttack = finalRoll + enemyStats.attackMod;
+          
+          const baseAC = getClassAC(selectedClass);
+          let extraAC = 0;
+          inventory.forEach(item => {
+            if (item.equipped && item.name.toLowerCase().includes('shield')) {
+              extraAC += 2;
+            }
+          });
+          const playerAC = baseAC + extraAC;
+          
+          let hit = totalAttack >= playerAC;
+          if (finalRoll === 20) hit = true;
+          if (finalRoll === 1) hit = false;
+          
+          setCombatPhase('enemy-resolve');
+          
+          if (wasDodging) {
+            hit = false; 
+          }
+          
+          setIsEnemyAttacking(true);
+          setTimeout(() => setIsEnemyAttacking(false), 350);
+          
+          if (hit) {
+            let dmg = rollDice(enemyStats.damage).total;
+            
+            if (combatBuffs.bardDebuff) {
+              dmg = Math.max(1, dmg - 3);
+              setCombatBuffs(prev => ({ ...prev, bardDebuff: false }));
+            }
+            if (combatBuffs.rage) {
+              dmg = Math.ceil(dmg / 2);
+            }
+            
+            playSoundEffect('fail');
+            setActiveFlashEffect('red');
+            setTimeout(() => setActiveFlashEffect(''), 550);
+            triggerShake();
+            
+            const isCrit = finalRoll === 20;
+            if (isCrit) {
+              dmg = dmg * 2;
+            }
+            
+            const newHp = Math.max(0, hp - dmg);
+            setHp(newHp);
+            spawnDamagePopup(dmg.toString(), 'player', isCrit ? 'crit' : 'damage');
+            
+            const hitMsg = isCrit 
+              ? `💀 CRITICAL HIT! ${enemyStats.name} rolled a natural 20 and slashed you for ${dmg} dark damage!`
+              : `💥 ${enemyStats.name} rolled ${finalRoll} + ${enemyStats.attackMod} = ${totalAttack} vs AC ${playerAC} — HIT! You take ${dmg} damage.`;
+            setCombatLog(prev => [hitMsg, ...prev]);
+            setCombatRollDetails(`Enemy Hit: rolled ${totalAttack} vs AC ${playerAC}. Deals ${dmg} damage.`);
+            
+            if (newHp <= 0) {
+              setTimeout(() => {
+                setCombatBuffs({ battleCry: false, rage: false, huntersMarkActive: false, bardDebuff: false, enemyStunned: false });
+                setGameState('active');
+                if (campaignMode === 'ai') {
+                  fetchNextAiNode(`You were defeated in battle by the ${enemyStats.name}... Describe your narrow escape or collapse.`);
+                } else {
+                  advanceStory('vault_fail');
+                }
+              }, 1800);
+              return;
+            }
+          } else {
+            playSoundEffect('success');
+            const missMsg = finalRoll === 1
+              ? `😅 ${enemyStats.name} rolled a 1 — CRITICAL MISS! Its claws swiped empty air.`
+              : `💨 ${enemyStats.name} rolled ${finalRoll} + ${enemyStats.attackMod} = ${totalAttack} vs AC ${playerAC} — MISS!`;
+            setCombatLog(prev => [missMsg, ...prev]);
+            spawnDamagePopup(wasDodging ? 'DODGED!' : 'MISS!', 'player', wasDodging ? 'dodge' : 'miss');
+            setCombatRollDetails(`Enemy Miss: rolled ${totalAttack} vs AC ${playerAC}.`);
+          }
+          
+          setTimeout(() => {
+            setCombatPhase('select-action');
+            setCombatRollDetails('Your turn! Select a combat command.');
+          }, 1800);
+        }
+      }, 75);
+      
+    }, 1200);
+  };
 
-    let playerDmg = 0;
-    let hitSuccess = true;
-    let combatLogMsg = "";
-    let skipEnemyTurn = false;
+  const resolveCombatVictory = () => {
+    setTimeout(() => {
+      playSoundEffect('success');
+      setCombatBuffs({ battleCry: false, rage: false, huntersMarkActive: false, bardDebuff: false, enemyStunned: false });
+      if (campaignMode === 'ai') {
+        setGameState('active');
+        fetchNextAiNode(`The ${enemyStats.name} dissolves into soot! Survey your surroundings and check for loot.`);
+      } else {
+        setGameState('active');
+        advanceStory('victory_node');
+      }
+    }, 1200);
+  };
 
-    let strBonus = 0;
-    let intBonus = 0;
-    let dexBonus = 0;
-    let wisBonus = 0;
-    let chaBonus = 0;
+  const executeCombatAction = (action) => {
+    if (enemyHp <= 0 || hp <= 0 || diceRolling) return;
+
+    let strBonus = 0, intBonus = 0, dexBonus = 0, wisBonus = 0, chaBonus = 0;
     inventory.forEach(item => {
       if (item.equipped && item.statBonus) {
         if (item.statBonus.strength) strBonus += item.statBonus.strength;
@@ -1000,265 +1324,289 @@ You MUST respond strictly with a valid JSON object matching this schema structur
       }
     });
 
+    const strMod = Math.floor(((charStats.strength + strBonus) - 10) / 2);
+    const intMod = Math.floor(((charStats.intelligence + intBonus) - 10) / 2);
+    const dexMod = Math.floor(((charStats.dexterity + dexBonus) - 10) / 2);
+    const wisMod = Math.floor(((charStats.wisdom + wisBonus) - 10) / 2);
+    const chaMod = Math.floor(((charStats.charisma + chaBonus) - 10) / 2);
+
+    const modMap = { strength: strMod, intelligence: intMod, dexterity: dexMod, wisdom: wisMod, charisma: chaMod };
+
     if (action === 'strike') {
-      playSoundEffect('hit');
-      const weaponModifier = selectedClass === 'rogue'
-        ? Math.floor(((charStats.dexterity + dexBonus) - 10) / 2)
-        : Math.floor(((charStats.strength + strBonus) - 10) / 2);
-      playerDmg = Math.floor(Math.random() * 8) + 4 + weaponModifier;
-
-      // Apply active buff bonuses to strike
-      if (combatBuffs.battleCry) {
-        playerDmg += 5;
-        setCombatBuffs(prev => ({ ...prev, battleCry: false }));
-      }
-      if (combatBuffs.rage) {
-        playerDmg += Math.floor(((charStats.strength + strBonus) - 10) / 2);
-        setCombatBuffs(prev => ({ ...prev, rage: false }));
-      }
-      if (combatBuffs.huntersMarkActive) {
-        playerDmg += Math.floor(Math.random() * 6) + 1;
-        setCombatBuffs(prev => ({ ...prev, huntersMarkActive: false }));
-      }
+      setCombatPhase('player-roll');
+      setCombatDiceType('attack');
       
-      setActiveCombatEffect('shake-monster');
-      setTimeout(() => setActiveCombatEffect(''), 550);
-
-      spawnDamagePopup(playerDmg, "enemy");
-      setEnemyHp(prev => Math.max(0, prev - playerDmg));
-      combatLogMsg = selectedClass === 'rogue'
-        ? `🗡️ You lunged with your twin daggers, dealing ${playerDmg} finesse damage!`
-        : `🛡️ You swung your blade at the beast, dealing ${playerDmg} physical damage!`;
-
-    } else if (action === 'spell') {
-      if (mana < 6) {
-        playSoundEffect('fail');
-        setCombatLog(prev => ["⚠️ Not enough Aether charge to cast spells!", ...prev]);
-        return;
-      }
-      playSoundEffect('magic');
-      setMana(prev => Math.max(0, prev - 6));
-      const spellModifier = Math.floor(((charStats.intelligence + intBonus) - 10) / 2);
-      playerDmg = Math.floor(Math.random() * 12) + 6 + spellModifier;
-
-      setActiveCombatEffect('spell-cast');
-      setTimeout(() => setActiveCombatEffect(''), 600);
-
-      spawnDamagePopup(playerDmg, "enemy");
-      setEnemyHp(prev => Math.max(0, prev - playerDmg));
-      combatLogMsg = `🔮 You cast a bolt of cosmic light, scorching the monster for ${playerDmg} magic damage!`;
-
+      const keyStat = getClassKeyStat(selectedClass);
+      const statMod = modMap[keyStat];
+      const attackMod = statMod + 3; // base proficiency
+      setCombatRollDetails(`Weapon Strike Attack Roll: 1d20 + ${keyStat.substring(0,3).toUpperCase()} Mod (+${statMod}) + Prof (+3)`);
+      setCombatRollDC(enemyStats.ac);
+      
+      let counter = 0;
+      const interval = setInterval(() => {
+        playSoundEffect('dice');
+        setRolledValue(Math.floor(Math.random() * 20) + 1);
+        counter++;
+        
+        if (counter > 10) {
+          clearInterval(interval);
+          
+          const roll = Math.floor(Math.random() * 20) + 1;
+          setRolledValue(roll);
+          
+          const totalAttack = roll + attackMod;
+          let hit = totalAttack >= enemyStats.ac;
+          if (roll === 20) hit = true;
+          if (roll === 1) hit = false;
+          
+          setCombatPhase('player-resolve');
+          
+          if (hit) {
+            playSoundEffect('hit');
+            setIsPlayerAttacking(true);
+            setTimeout(() => setIsPlayerAttacking(false), 350);
+            
+            const isCrit = roll === 20;
+            const damageNotation = getClassWeaponDamage(selectedClass);
+            let dmgRoll = rollDice(damageNotation);
+            let dmg = dmgRoll.total + statMod;
+            
+            if (combatBuffs.battleCry) {
+              dmg += 5;
+              setCombatBuffs(prev => ({ ...prev, battleCry: false }));
+            }
+            if (combatBuffs.rage) {
+              dmg += statMod;
+              setCombatBuffs(prev => ({ ...prev, rage: false }));
+            }
+            if (combatBuffs.huntersMarkActive) {
+              const markDmg = Math.floor(Math.random() * 6) + 1;
+              dmg += markDmg;
+              setCombatBuffs(prev => ({ ...prev, huntersMarkActive: false }));
+            }
+            
+            if (isCrit) {
+              dmg += rollDice(damageNotation).total;
+            }
+            
+            dmg = Math.max(1, dmg);
+            const newEnemyHp = Math.max(0, enemyHp - dmg);
+            setEnemyHp(newEnemyHp);
+            
+            setActiveCombatEffect('shake-monster');
+            setTimeout(() => setActiveCombatEffect(''), 550);
+            spawnDamagePopup(dmg.toString(), 'enemy', isCrit ? 'crit' : 'damage');
+            
+            const hitMsg = isCrit
+              ? `🔥 CRITICAL HIT! You rolled a natural 20! Your strike hits the ${enemyStats.name} for ${dmg} slashing damage!`
+              : `⚔️ You rolled ${roll} + ${attackMod} = ${totalAttack} vs AC ${enemyStats.ac} — HIT! You deal ${dmg} physical damage.`;
+            setCombatLog(prev => [hitMsg, ...prev]);
+            setCombatRollDetails(`Hit: rolled ${totalAttack} vs AC ${enemyStats.ac}. Deals ${dmg} damage.`);
+            
+            if (newEnemyHp <= 0) {
+              resolveCombatVictory();
+              return;
+            }
+          } else {
+            playSoundEffect('fail');
+            spawnDamagePopup('MISS!', 'enemy', 'miss');
+            const missMsg = roll === 1
+              ? `❌ CRITICAL MISS! You rolled a 1 — your strike goes wildly wide of the ${enemyStats.name}.`
+              : `⚔️ You rolled ${roll} + ${attackMod} = ${totalAttack} vs AC ${enemyStats.ac} — MISS!`;
+            setCombatLog(prev => [missMsg, ...prev]);
+            setCombatRollDetails(`Miss: rolled ${totalAttack} vs AC ${enemyStats.ac}.`);
+          }
+          
+          setTimeout(() => {
+            triggerEnemyRetaliation();
+          }, 1800);
+        }
+      }, 75);
+      
     } else if (action === 'class_ability') {
       const ability = CLASS_ABILITIES[selectedClass];
       const cost = ability.manaCost;
-
+      
       if (cost > 0 && mana < cost) {
         playSoundEffect('fail');
         setCombatLog(prev => [`⚠️ Not enough mana for ${ability.name}! (Need ${cost} MP)`, ...prev]);
         return;
       }
+      
       if (cost > 0) setMana(prev => Math.max(0, prev - cost));
-      playSoundEffect('magic');
-
-      const strMod  = Math.floor(((charStats.strength + strBonus) - 10) / 2);
-      const intMod  = Math.floor(((charStats.intelligence + intBonus) - 10) / 2);
-      const dexMod  = Math.floor(((charStats.dexterity + dexBonus) - 10) / 2);
-      const wisMod  = Math.floor(((charStats.wisdom + wisBonus) - 10) / 2);
-      const chaMod  = Math.floor(((charStats.charisma + chaBonus) - 10) / 2);
-
-      setActiveCombatEffect('spell-cast');
-      setTimeout(() => setActiveCombatEffect(''), 700);
-
-      switch (selectedClass) {
-        case 'warrior': {
-          // Battle Cry — free buff, +5 to next strike
+      
+      if (selectedClass === 'warrior' || selectedClass === 'barbarian' || selectedClass === 'ranger') {
+        playSoundEffect('magic');
+        setActiveFlashEffect('purple');
+        setTimeout(() => setActiveFlashEffect(''), 500);
+        
+        let logMsg = "";
+        if (selectedClass === 'warrior') {
           setCombatBuffs(prev => ({ ...prev, battleCry: true }));
-          combatLogMsg = `⚔️ BATTLE CRY! You raise your sword and bellow a war cry. Your next strike gains +5 damage!`;
-          break;
-        }
-        case 'mage': {
-          // Arcane Surge — big INT-scaled blast
-          playerDmg = Math.floor(Math.random() * 10) + 8 + (intMod * 2);
-          spawnDamagePopup(playerDmg, "enemy");
-          setEnemyHp(prev => Math.max(0, prev - playerDmg));
-          combatLogMsg = `✨ ARCANE SURGE! Raw aether ignites the air, blasting the beast for ${playerDmg} arcane damage!`;
-          break;
-        }
-        case 'rogue': {
-          // Sneak Attack — DEX scaled, 25% crit chance
-          const isCrit = Math.random() < 0.25;
-          playerDmg = Math.floor(Math.random() * 8) + 4 + dexMod + (isCrit ? 8 : 0);
-          spawnDamagePopup(playerDmg, "enemy");
-          setEnemyHp(prev => Math.max(0, prev - playerDmg));
-          combatLogMsg = isCrit
-            ? `🗡️ SNEAK ATTACK — CRITICAL HIT! You emerge from shadows for a devastating ${playerDmg} sneak damage!`
-            : `🗡️ SNEAK ATTACK! You dart from the shadows, landing ${playerDmg} precision sneak damage!`;
-          break;
-        }
-        case 'paladin': {
-          // Divine Smite — holy damage + heal 8 HP
-          playerDmg = Math.floor(Math.random() * 8) + 6 + chaMod;
-          const healAmt = 8;
-          spawnDamagePopup(playerDmg, "enemy");
-          setEnemyHp(prev => Math.max(0, prev - playerDmg));
-          setHp(prev => Math.min(maxHp, prev + healAmt));
-          combatLogMsg = `✝️ DIVINE SMITE! Holy light erupts from your blade for ${playerDmg} radiant damage! The gods bless you, restoring ${healAmt} HP.`;
-          break;
-        }
-        case 'ranger': {
-          // Hunter's Mark — marks enemy for +1d6 on next strike
-          setCombatBuffs(prev => ({ ...prev, huntersMarkActive: true }));
-          combatLogMsg = `🎯 HUNTER'S MARK! You trace a runic brand on the beast. Your next attack deals +1d6 bonus hunter's damage!`;
-          break;
-        }
-        case 'cleric': {
-          // Sacred Flame — auto-hit WIS-scaled radiant
-          playerDmg = Math.floor(Math.random() * 8) + 4 + wisMod;
-          spawnDamagePopup(playerDmg, "enemy");
-          setEnemyHp(prev => Math.max(0, prev - playerDmg));
-          combatLogMsg = `🔥 SACRED FLAME! A column of divine radiance descends from the gods, striking for ${playerDmg} radiant damage. No attack roll needed!`;
-          break;
-        }
-        case 'bard': {
-          // Vicious Mockery — CHA-scaled psychic dmg + enemy weakened
-          playerDmg = Math.floor(Math.random() * 4) + 2 + chaMod;
-          spawnDamagePopup(playerDmg, "enemy");
-          setEnemyHp(prev => Math.max(0, prev - playerDmg));
-          setCombatBuffs(prev => ({ ...prev, bardDebuff: true }));
-          combatLogMsg = `🎵 VICIOUS MOCKERY! You unleash a torrent of biting words, dealing ${playerDmg} psychic damage. The beast recoils, weakened for its next attack!`;
-          break;
-        }
-        case 'barbarian': {
-          // Rage — free buff, halves incoming damage and adds STR bonus
+          logMsg = `⚔️ BATTLE CRY! You raise your shield and bellow a terrifying cry. Your next physical attack gains +5 damage!`;
+        } else if (selectedClass === 'barbarian') {
           setCombatBuffs(prev => ({ ...prev, rage: true }));
-          combatLogMsg = `🔥 RAGE! Your eyes go bloodshot and veins bulge across your neck. Incoming damage is halved and your next strike channels raw fury!`;
-          break;
+          logMsg = `🔥 BERSERKER RAGE! You enter a furious rage. Incoming damage is halved and your next attack deals extra damage!`;
+        } else if (selectedClass === 'ranger') {
+          setCombatBuffs(prev => ({ ...prev, huntersMarkActive: true }));
+          logMsg = `🎯 HUNTER'S MARK! You focus your quarry eyes on the ${enemyStats.name}. Your next attack deals +1d6 bonus damage.`;
         }
-        case 'druid': {
-          // Thorn Whip — WIS-scaled nature dmg
-          playerDmg = Math.floor(Math.random() * 6) + 3 + wisMod;
-          spawnDamagePopup(playerDmg, "enemy");
-          setEnemyHp(prev => Math.max(0, prev - playerDmg));
-          combatLogMsg = `🌿 THORN WHIP! A barbed vine lashes out, dealing ${playerDmg} piercing nature damage and dragging the beast closer!`;
-          break;
-        }
-        case 'monk': {
-          // Stunning Strike — DEX+WIS damage, 40% stun chance
-          playerDmg = Math.floor(Math.random() * 6) + 3 + dexMod;
-          const isStunned = Math.random() < 0.40;
-          spawnDamagePopup(playerDmg, "enemy");
-          setEnemyHp(prev => Math.max(0, prev - playerDmg));
-          if (isStunned) {
-            setCombatBuffs(prev => ({ ...prev, enemyStunned: true }));
-            combatLogMsg = `👊 STUNNING STRIKE! You channel Ki into a precise blow for ${playerDmg} damage. The beast is STUNNED — it loses its next action!`;
-            skipEnemyTurn = true;
-          } else {
-            combatLogMsg = `👊 STUNNING STRIKE! You deal ${playerDmg} Ki damage, but the beast shrugs off the stun.`;
+        
+        setCombatLog(prev => [logMsg, ...prev]);
+        setCombatPhase('player-resolve');
+        setCombatRollDetails(`Ability Activated: ${ability.name}`);
+        
+        setTimeout(() => {
+          triggerEnemyRetaliation();
+        }, 1500);
+        
+      } else {
+        setCombatPhase('player-roll');
+        setCombatDiceType('attack');
+        
+        const keyStat = getClassKeyStat(selectedClass);
+        const statMod = modMap[keyStat];
+        const attackMod = statMod + 3;
+        
+        setCombatRollDetails(`Spell Attack (${ability.name}): 1d20 + ${keyStat.substring(0,3).toUpperCase()} Mod (+${statMod}) + Prof (+3)`);
+        setCombatRollDC(enemyStats.ac);
+        
+        let counter = 0;
+        const interval = setInterval(() => {
+          playSoundEffect('dice');
+          setRolledValue(Math.floor(Math.random() * 20) + 1);
+          counter++;
+          
+          if (counter > 10) {
+            clearInterval(interval);
+            
+            const roll = Math.floor(Math.random() * 20) + 1;
+            setRolledValue(roll);
+            
+            const totalAttack = roll + attackMod;
+            const isCrit = roll === 20;
+            let hit = totalAttack >= enemyStats.ac;
+            if (roll === 20) hit = true;
+            if (roll === 1) hit = false;
+            
+            setCombatPhase('player-resolve');
+            
+            if (hit) {
+              playSoundEffect('magic');
+              setActiveFlashEffect('purple');
+              setTimeout(() => setActiveFlashEffect(''), 550);
+              
+              let dmg = 0;
+              let logMsg = "";
+              
+              if (selectedClass === 'mage') {
+                dmg = rollDice('3d6').total + statMod;
+                logMsg = `✨ ARCANE SURGE! You channel raw cosmic energies. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} arcane damage.`;
+              } else if (selectedClass === 'rogue') {
+                dmg = rollDice('2d6').total + statMod;
+                logMsg = `🗡️ SNEAK ATTACK! You slip behind the ${enemyStats.name} and strike. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} sneak damage.`;
+              } else if (selectedClass === 'paladin') {
+                dmg = rollDice('3d8').total + statMod;
+                setHp(prev => Math.min(maxHp, prev + 8));
+                spawnDamagePopup('+8', 'player', 'heal');
+                logMsg = `✝️ DIVINE SMITE! Your blade burns with holy light. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} radiant damage and restores 8 HP.`;
+              } else if (selectedClass === 'cleric') {
+                dmg = rollDice('2d8').total + statMod;
+                logMsg = `🔥 SACRED FLAME! A column of divine fire falls from above. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} radiant damage.`;
+              } else if (selectedClass === 'bard') {
+                dmg = rollDice('1d8').total + statMod;
+                setCombatBuffs(prev => ({ ...prev, bardDebuff: true }));
+                logMsg = `🎵 VICIOUS MOCKERY! You sling biting insults. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} psychic damage and weakens the foe.`;
+              } else if (selectedClass === 'druid') {
+                dmg = rollDice('2d6').total + statMod;
+                logMsg = `🌿 THORN WHIP! A thorny vine lashes out. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} piercing nature damage.`;
+              } else if (selectedClass === 'monk') {
+                dmg = rollDice('1d8').total + statMod;
+                const stun = Math.random() < 0.45;
+                if (stun) {
+                  setCombatBuffs(prev => ({ ...prev, enemyStunned: true }));
+                }
+                logMsg = `👊 STUNNING STRIKE! Ki-charged fist strikes target. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} damage${stun ? ' and STUNS the foe!' : '.'}`;
+              } else if (selectedClass === 'sorcerer') {
+                dmg = rollDice('2d8').total + statMod;
+                const elements = ['fire', 'frost', 'lightning', 'acid'];
+                const ele = elements[Math.floor(Math.random() * elements.length)];
+                logMsg = `⚡ CHAOS BOLT! Wild ${ele} energy erupts. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} elemental damage.`;
+              } else if (selectedClass === 'warlock') {
+                dmg = rollDice('2d10').total + statMod;
+                logMsg = `🌑 ELDRITCH BLAST! A beam of crackling purple energy hits. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} necrotic damage.`;
+              }
+              
+              if (isCrit) dmg = dmg * 2;
+              
+              const newEnemyHp = Math.max(0, enemyHp - dmg);
+              setEnemyHp(newEnemyHp);
+              
+              setActiveCombatEffect('shake-monster');
+              setTimeout(() => setActiveCombatEffect(''), 500);
+              spawnDamagePopup(dmg.toString(), 'enemy', isCrit ? 'crit' : 'damage');
+              setCombatLog(prev => [isCrit ? `🔥 CRITICAL HIT! ${logMsg}` : logMsg, ...prev]);
+              setCombatRollDetails(`Spell Hit: rolled ${totalAttack} vs AC ${enemyStats.ac}. Deals ${dmg} damage.`);
+              
+              if (newEnemyHp <= 0) {
+                resolveCombatVictory();
+                return;
+              }
+            } else {
+              playSoundEffect('fail');
+              spawnDamagePopup('MISS!', 'enemy', 'miss');
+              const missMsg = roll === 1
+                ? `❌ Spell fizzled! You rolled a natural 1 — the arcane energy dispersed harmlessly.`
+                : `✨ You rolled ${roll} + ${attackMod} = ${totalAttack} vs AC ${enemyStats.ac} — MISS! Your spell goes wide.`;
+              setCombatLog(prev => [missMsg, ...prev]);
+              setCombatRollDetails(`Spell Miss: rolled ${totalAttack} vs AC ${enemyStats.ac}.`);
+            }
+            
+            setTimeout(() => {
+              triggerEnemyRetaliation();
+            }, 1800);
           }
-          break;
-        }
-        case 'sorcerer': {
-          // Chaos Bolt — random element, 30% chain
-          const elements = ['⚡ lightning', '🔥 fire', '❄️ frost', '☠️ necrotic', '💚 acid'];
-          const element = elements[Math.floor(Math.random() * elements.length)];
-          playerDmg = Math.floor(Math.random() * 8) + 4 + chaMod;
-          const chains = Math.random() < 0.30;
-          const chainDmg = chains ? Math.floor(Math.random() * 6) + 2 : 0;
-          spawnDamagePopup(playerDmg + chainDmg, "enemy");
-          setEnemyHp(prev => Math.max(0, prev - playerDmg - chainDmg));
-          combatLogMsg = chains
-            ? `⚡ CHAOS BOLT! A ${element} bolt strikes for ${playerDmg} damage and CHAINS for an additional ${chainDmg}!`
-            : `⚡ CHAOS BOLT! A wild ${element} surge erupts from your bloodline for ${playerDmg} elemental damage!`;
-          break;
-        }
-        case 'warlock': {
-          // Eldritch Blast — free, CHA-scaled necrotic beam
-          playerDmg = Math.floor(Math.random() * 10) + 3 + chaMod;
-          spawnDamagePopup(playerDmg, "enemy");
-          setEnemyHp(prev => Math.max(0, prev - playerDmg));
-          combatLogMsg = `🌑 ELDRITCH BLAST! A beam of crackling void energy tears into the beast for ${playerDmg} necrotic damage! Your patron smiles.`;
-          break;
-        }
-        default:
-          break;
-      }
-
-    } else if (action === 'dodge') {
-      playSoundEffect('click');
-      hitSuccess = Math.random() > 0.6;
-      combatLogMsg = "💨 You focused your senses, preparing to parry or evade the beast's next swipe.";
-    }
-
-    setCombatLog(prev => [combatLogMsg, ...prev]);
-
-    // Victory check
-    const newEnemyHp = Math.max(0, enemyHp - playerDmg);
-    if (newEnemyHp <= 0) {
-      setTimeout(() => {
-        playSoundEffect('success');
-        setCombatBuffs({ battleCry: false, rage: false, huntersMarkActive: false, bardDebuff: false, enemyStunned: false });
-        if (campaignMode === 'ai') {
-          setGameState('active');
-          fetchNextAiNode("The Shadow-Hound dissolves into soot! Survey your surroundings and check for loot.");
-        } else {
-          setGameState('active');
-          advanceStory('victory_node');
-        }
-      }, 1200);
-      return;
-    }
-
-    // Enemy retaliation (skip if stunned)
-    if (skipEnemyTurn) {
-      setCombatBuffs(prev => ({ ...prev, enemyStunned: false }));
-      setTimeout(() => {
-        setCombatLog(prev => [`🌀 The beast is stunned and loses its action this turn!`, ...prev]);
-      }, 800);
-      return;
-    }
-
-    setTimeout(() => {
-      if (hp <= 0) return;
-      let enemyDmg = Math.floor(Math.random() * 6) + 3;
-
-      // Bard debuff: enemy hits for less
-      if (combatBuffs.bardDebuff) {
-        enemyDmg = Math.max(1, enemyDmg - 3);
-        setCombatBuffs(prev => ({ ...prev, bardDebuff: false }));
-      }
-      // Rage: halve incoming
-      if (combatBuffs.rage) {
-        enemyDmg = Math.ceil(enemyDmg / 2);
+        }, 75);
       }
       
-      if (action === 'dodge' && hitSuccess) {
-        setCombatLog(prev => ["💫 Evaded! You gracefully rolled beneath the monster's claws.", ...prev]);
-        playSoundEffect('success');
-      } else {
-        playSoundEffect('fail');
-        if (action === 'dodge') {
-          enemyDmg = Math.floor(enemyDmg / 2);
-          setCombatLog(prev => [`💥 Parry! You cushioned the blow, taking only ${enemyDmg} crushing damage.`, ...prev]);
-        } else {
-          setCombatLog(prev => [`👹 The Shadow-Hound retaliated, slashing your defenses for ${enemyDmg} dark damage!`, ...prev]);
+    } else if (action === 'dodge') {
+      setCombatPhase('player-roll');
+      setCombatDiceType('dodge');
+      
+      const dodgeDC = 10 + enemyStats.attackMod;
+      setCombatRollDetails(`Tactical Dodge Check: 1d20 + DEX Mod (+${dexMod}) vs DC ${dodgeDC}`);
+      setCombatRollDC(dodgeDC);
+      
+      let counter = 0;
+      const interval = setInterval(() => {
+        playSoundEffect('dice');
+        setRolledValue(Math.floor(Math.random() * 20) + 1);
+        counter++;
+        
+        if (counter > 10) {
+          clearInterval(interval);
+          
+          const roll = Math.floor(Math.random() * 20) + 1;
+          setRolledValue(roll);
+          
+          const total = roll + dexMod;
+          const passed = total >= dodgeDC;
+          
+          setCombatPhase('player-resolve');
+          playSoundEffect(passed ? 'success' : 'fail');
+          
+          const logMsg = passed
+            ? `💨 Evade Prep: You rolled ${roll} + ${dexMod} = ${total} vs DC ${dodgeDC} — SUCCESS! You focus your reflexes. Enemy attack will miss.`
+            : `⚠️ Evade Prep: You rolled ${roll} + ${dexMod} = ${total} vs DC ${dodgeDC} — FAILED! You stumbled.`;
+          setCombatLog(prev => [logMsg, ...prev]);
+          setCombatRollDetails(`Dodge Check: rolled ${total} vs DC ${dodgeDC}. ${passed ? 'Dodge Ready!' : 'Dodge Failed!'}`);
+          
+          setTimeout(() => {
+            triggerEnemyRetaliation(passed, dexMod);
+          }, 1800);
         }
-        spawnDamagePopup(enemyDmg, "player");
-        setHp(prev => Math.max(1, prev - enemyDmg));
-      }
-    }, 800);
-  };
-
-  const spawnDamagePopup = (amt, target) => {
-    const id = Math.random().toString();
-    const newPopup = {
-      id,
-      text: `-${amt}`,
-      color: target === 'enemy' ? 'text-purple-400 font-extrabold shadow-purple-900/50' : 'text-red-500 font-bold shadow-red-900/50'
-    };
-    setDamagePopups(prev => [...prev, newPopup]);
-    setTimeout(() => {
-      setDamagePopups(prev => prev.filter(p => p.id !== id));
-    }, 800);
+      }, 75);
+    }
   };
 
   const resetGame = () => {
@@ -1283,6 +1631,11 @@ You MUST respond strictly with a valid JSON object matching this schema structur
   return (
     <div className={`min-h-screen bg-stone-950 text-stone-100 flex flex-col justify-between font-serif relative overflow-hidden select-none ${shakeScreen ? 'animate-shake-screen' : ''}`}>
       <style>{STYLE_INJECTION}</style>
+
+      {/* Full-Screen Visual Flash Overlays */}
+      {activeFlashEffect === 'red' && <div className="absolute inset-0 bg-red-600/25 mix-blend-overlay pointer-events-none z-50 animate-red-flash" />}
+      {activeFlashEffect === 'green' && <div className="absolute inset-0 bg-emerald-600/20 mix-blend-overlay pointer-events-none z-50 animate-green-flash" />}
+      {activeFlashEffect === 'purple' && <div className="absolute inset-0 bg-indigo-600/20 mix-blend-overlay pointer-events-none z-50 animate-purple-flash" />}
 
       {/* Environment-Aware Ambient Background */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden scene-transition">
@@ -1571,50 +1924,74 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                   <div className="space-y-6 animate-ink-bleed">
                     <div className="text-center space-y-2">
                       <span className="text-xs font-sans font-bold tracking-widest text-red-500 uppercase flex items-center justify-center gap-1">
-                        <ShieldAlert className="w-4 h-4" /> Combat Encounters
+                        <ShieldAlert className="w-4 h-4 animate-pulse" /> Combat Encounters
                       </span>
-                      <h3 className="text-2xl font-bold text-stone-100">BATTLE: The Void Stalker</h3>
+                      <h3 className="text-2xl font-bold text-stone-100 uppercase tracking-wider font-sans">
+                        BATTLE: {enemyStats.name}
+                      </h3>
+                      {combatPhase !== 'initiative-roll' && (
+                        <p className="text-[10px] text-stone-500 font-sans uppercase tracking-widest">
+                          Phase: {combatPhase === 'select-action' ? "Your Turn (Command Select)" : combatPhase.startsWith('player') ? "Your Action" : `${enemyStats.name}'s Action`}
+                        </p>
+                      )}
                     </div>
 
-                    <div className="bg-stone-950/80 border border-purple-900/40 rounded-xl p-6 flex flex-col md:flex-row items-center justify-around gap-6 relative min-h-[160px]">
+                    <div className="bg-stone-950/80 border border-purple-900/40 rounded-xl p-6 flex flex-col md:flex-row items-center justify-around gap-6 relative min-h-[160px] overflow-hidden">
                       
-                      <div className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none z-30">
+                      <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
                         {damagePopups.map((pop) => (
-                          <div key={pop.id} className={`text-xl font-sans animate-damage ${pop.color}`}>
+                          <div key={pop.id} className={`text-xl font-sans animate-damage absolute ${pop.color}`}>
                             {pop.text}
                           </div>
                         ))}
                       </div>
 
-                      <div className="flex flex-col items-center gap-2">
-                        <div className={`w-16 h-16 rounded-full bg-stone-900 border-2 border-amber-500 flex items-center justify-center ${activeCombatEffect === 'spell-cast' ? 'scale-110 ring-4 ring-indigo-500 transition-all' : ''}`}>
+                      {/* Player Avatar Card */}
+                      <div className={`flex flex-col items-center gap-2 transition-all duration-300 ${
+                        isPlayerAttacking ? 'animate-player-strike' : ''
+                      } ${combatPhase === 'select-action' ? 'scale-105' : 'opacity-80'}`}>
+                        <div className={`w-16 h-16 rounded-full bg-stone-900 border-2 border-amber-500 flex items-center justify-center relative shadow-lg ${
+                          activeCombatEffect === 'spell-cast' ? 'scale-110 ring-4 ring-indigo-500 transition-all' : ''
+                        }`}>
                           <User className="w-8 h-8 text-amber-500" />
                         </div>
                         <span className="text-xs font-sans font-bold">{CLASSES[selectedClass].name}</span>
                         <span className="text-xs font-sans text-stone-400">HP: {hp}/{maxHp}</span>
+                        <span className="text-[9px] font-sans text-stone-500">AC: {getClassAC(selectedClass)}</span>
                       </div>
 
                       <div className="text-lg font-sans font-semibold text-stone-600">VS</div>
 
-                      <div className="flex flex-col items-center gap-2">
-                        <div className={`w-20 h-20 rounded-full bg-stone-900 border-2 border-purple-600 flex items-center justify-center overflow-hidden relative ${activeCombatEffect === 'shake-monster' ? 'animate-shake-screen ring-4 ring-red-500 animate-monster-shake' : ''}`}>
+                      {/* Enemy Monster Card */}
+                      <div className={`flex flex-col items-center gap-2 transition-all duration-300 ${
+                        isEnemyAttacking ? 'animate-monster-strike' : ''
+                      } ${activeCombatEffect === 'shake-monster' ? 'animate-monster-shake' : ''}`}>
+                        <div className={`w-20 h-20 rounded-full bg-stone-900 border-2 border-purple-600 flex items-center justify-center overflow-hidden relative shadow-lg ${
+                          combatPhase.startsWith('enemy') ? 'ring-2 ring-red-500/50' : ''
+                        }`}>
                           <svg className="w-12 h-12 text-purple-500" viewBox="0 0 100 100">
                             <polygon points="50,15 90,50 50,85 10,50" fill="none" stroke="currentColor" strokeWidth="3" />
                             <circle cx="50" cy="50" r="14" fill="currentColor" className="animate-pulse" />
                           </svg>
                         </div>
-                        <span className="text-xs font-sans font-bold text-purple-400">Shadow-Hound</span>
+                        <span className="text-xs font-sans font-bold text-purple-400">{enemyStats.name}</span>
                         <div className="w-32 bg-stone-800 h-2 rounded overflow-hidden">
                           <div className="bg-purple-600 h-full transition-all duration-300" style={{ width: `${(enemyHp / maxEnemyHp) * 100}%` }} />
                         </div>
                         <span className="text-[10px] font-sans text-stone-400">Enemy HP: {enemyHp}/{maxEnemyHp}</span>
+                        <span className="text-[9px] font-sans text-stone-500">AC: {enemyStats.ac}</span>
                       </div>
 
                     </div>
 
                     <div className="bg-stone-900/60 rounded border border-stone-800 p-4 h-32 overflow-y-auto scrollbar-parchment font-sans text-xs space-y-2">
                       {combatLog.map((log, index) => (
-                        <p key={index} className="text-stone-300 leading-relaxed border-l-2 border-purple-800/40 pl-2">
+                        <p key={index} className={`text-stone-300 leading-relaxed border-l-2 pl-2 ${
+                          log.startsWith('🎲') || log.startsWith('⚔️') ? 'border-amber-600/70 text-amber-200 font-semibold' :
+                          log.startsWith('💥') || log.startsWith('💀') ? 'border-red-800/80 text-red-300' :
+                          log.startsWith('✨') || log.startsWith('🔮') ? 'border-purple-700/60 text-purple-200' :
+                          'border-purple-800/40'
+                        }`}>
                           {log}
                         </p>
                       ))}
@@ -1640,60 +2017,88 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                         )}
                       </div>
                     )}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <button 
-                        onClick={() => executeCombatAction('strike')}
-                        className="p-3 bg-red-950/40 hover:bg-red-900/30 text-red-200 border border-red-900/60 rounded text-xs font-sans font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <Sword className="w-4 h-4 text-red-400" /> Weapon Strike
-                      </button>
-                      {/* Class Signature Ability Button */}
-                      {(() => {
-                        const ability = CLASS_ABILITIES[selectedClass];
-                        const canAfford = mana >= ability.manaCost;
-                        const colorMap = {
-                          amber:  { bg: 'bg-amber-950/40 hover:bg-amber-900/30',   border: 'border-amber-800/60',   text: 'text-amber-200',   icon: 'text-amber-400'   },
-                          purple: { bg: 'bg-purple-950/40 hover:bg-purple-900/30', border: 'border-purple-800/60', text: 'text-purple-200', icon: 'text-purple-400' },
-                          emerald:{ bg: 'bg-emerald-950/40 hover:bg-emerald-900/30',border: 'border-emerald-800/60',text: 'text-emerald-200',icon: 'text-emerald-400'},
-                          yellow: { bg: 'bg-yellow-950/40 hover:bg-yellow-900/30', border: 'border-yellow-800/60', text: 'text-yellow-200', icon: 'text-yellow-400' },
-                          green:  { bg: 'bg-green-950/40 hover:bg-green-900/30',   border: 'border-green-800/60',   text: 'text-green-200',   icon: 'text-green-400'   },
-                          sky:    { bg: 'bg-sky-950/40 hover:bg-sky-900/30',       border: 'border-sky-800/60',     text: 'text-sky-200',     icon: 'text-sky-400'     },
-                          pink:   { bg: 'bg-pink-950/40 hover:bg-pink-900/30',     border: 'border-pink-800/60',    text: 'text-pink-200',    icon: 'text-pink-400'    },
-                          red:    { bg: 'bg-red-950/40 hover:bg-red-900/30',       border: 'border-red-800/60',     text: 'text-red-200',     icon: 'text-red-400'     },
-                          lime:   { bg: 'bg-lime-950/40 hover:bg-lime-900/30',     border: 'border-lime-800/60',    text: 'text-lime-200',    icon: 'text-lime-400'    },
-                          cyan:   { bg: 'bg-cyan-950/40 hover:bg-cyan-900/30',     border: 'border-cyan-800/60',    text: 'text-cyan-200',    icon: 'text-cyan-400'    },
-                          violet: { bg: 'bg-violet-950/40 hover:bg-violet-900/30', border: 'border-violet-800/60', text: 'text-violet-200', icon: 'text-violet-400' },
-                          slate:  { bg: 'bg-slate-800/40 hover:bg-slate-700/30',   border: 'border-slate-600/60',   text: 'text-slate-200',   icon: 'text-slate-300'   },
-                        };
-                        const c = colorMap[ability.color] || colorMap.purple;
-                        return (
-                          <button
-                            onClick={() => executeCombatAction('class_ability')}
-                            disabled={!canAfford}
-                            title={ability.tooltip}
-                            className={`p-3 ${canAfford ? c.bg : 'bg-stone-900/40 hover:bg-stone-900/40 opacity-50 cursor-not-allowed'} ${c.text} border ${canAfford ? c.border : 'border-stone-800'} rounded text-xs font-sans font-semibold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer relative group`}
-                          >
-                            <span className="flex items-center gap-1.5">
-                              <Sparkles className={`w-3.5 h-3.5 ${canAfford ? c.icon : 'text-stone-600'}`} />
-                              <span>{ability.icon} {ability.name}</span>
-                            </span>
-                            <span className={`text-[9px] font-sans ${canAfford ? 'text-stone-400' : 'text-stone-600'}`}>
-                              {ability.manaCost === 0 ? 'Free · ' : `${ability.manaCost} MP · `}{ability.stat.substring(0,3).toUpperCase()} scaled
-                            </span>
-                            {/* Tooltip */}
-                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-stone-900 border border-stone-700 text-stone-300 text-[10px] font-sans p-2 rounded shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none leading-relaxed">
-                              {ability.tooltip}
-                            </span>
-                          </button>
-                        );
-                      })()}
-                      <button 
-                        onClick={() => executeCombatAction('dodge')}
-                        className="p-3 bg-stone-900 hover:bg-stone-850 text-stone-300 border border-stone-800 rounded text-xs font-sans font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <Shield className="w-4 h-4 text-stone-400" /> Tactical Dodge
-                      </button>
-                    </div>
+
+                    {/* Combat Commands Conditional Phase Render */}
+                    {combatPhase === 'initiative-roll' ? (
+                      <div className="flex justify-center w-full py-2">
+                        <button 
+                          onClick={rollCombatInitiative}
+                          disabled={diceRolling}
+                          className={`px-8 py-4 w-full max-w-md bg-gradient-to-r from-purple-800 to-indigo-900 text-stone-100 hover:from-purple-700 hover:to-indigo-800 border border-purple-500 rounded-lg text-sm font-sans font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-3 cursor-pointer shadow-lg shadow-purple-950/50 hover:scale-[1.02] active:scale-[0.98] ${
+                            diceRolling ? 'opacity-70 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          <Dice5 className={`w-5 h-5 ${diceRolling ? 'animate-spin' : ''}`} />
+                          {diceRolling ? "Rolling Initiative..." : "Roll d20 Initiative!"}
+                        </button>
+                      </div>
+                    ) : combatPhase === 'select-action' ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button 
+                          onClick={() => executeCombatAction('strike')}
+                          className="p-3 bg-red-950/40 hover:bg-red-900/30 text-red-200 border border-red-900/60 rounded text-xs font-sans font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Sword className="w-4 h-4 text-red-400" /> Weapon Strike
+                        </button>
+                        {/* Class Signature Ability Button */}
+                        {(() => {
+                          const ability = CLASS_ABILITIES[selectedClass];
+                          const canAfford = mana >= ability.manaCost;
+                          const colorMap = {
+                            amber:  { bg: 'bg-amber-950/40 hover:bg-amber-900/30',   border: 'border-amber-800/60',   text: 'text-amber-200',   icon: 'text-amber-400'   },
+                            purple: { bg: 'bg-purple-950/40 hover:bg-purple-900/30', border: 'border-purple-800/60', text: 'text-purple-200', icon: 'text-purple-400' },
+                            emerald:{ bg: 'bg-emerald-950/40 hover:bg-emerald-900/30',border: 'border-emerald-800/60',text: 'text-emerald-200',icon: 'text-emerald-400'},
+                            yellow: { bg: 'bg-yellow-950/40 hover:bg-yellow-900/30', border: 'border-yellow-800/60', text: 'text-yellow-200', icon: 'text-yellow-400' },
+                            green:  { bg: 'bg-green-950/40 hover:bg-green-900/30',   border: 'border-green-800/60',   text: 'text-green-200',   icon: 'text-green-400'   },
+                            sky:    { bg: 'bg-sky-950/40 hover:bg-sky-900/30',       border: 'border-sky-800/60',     text: 'text-sky-200',     icon: 'text-sky-400'     },
+                            pink:   { bg: 'bg-pink-950/40 hover:bg-pink-900/30',     border: 'border-pink-800/60',    text: 'text-pink-200',    icon: 'text-pink-400'    },
+                            red:    { bg: 'bg-red-950/40 hover:bg-red-900/30',       border: 'border-red-800/60',     text: 'text-red-200',     icon: 'text-red-400'     },
+                            lime:   { bg: 'bg-lime-950/40 hover:bg-lime-900/30',     border: 'border-lime-800/60',    text: 'text-lime-200',    icon: 'text-lime-400'    },
+                            cyan:   { bg: 'bg-cyan-950/40 hover:bg-cyan-900/30',     border: 'border-cyan-800/60',    text: 'text-cyan-200',    icon: 'text-cyan-400'    },
+                            violet: { bg: 'bg-violet-950/40 hover:bg-violet-900/30', border: 'border-violet-800/60', text: 'text-violet-200', icon: 'text-violet-400' },
+                            slate:  { bg: 'bg-slate-800/40 hover:bg-slate-700/30',   border: 'border-slate-600/60',   text: 'text-slate-200',   icon: 'text-slate-300'   },
+                          };
+                          const c = colorMap[ability.color] || colorMap.purple;
+                          return (
+                            <button
+                              onClick={() => executeCombatAction('class_ability')}
+                              disabled={!canAfford}
+                              title={ability.tooltip}
+                              className={`p-3 ${canAfford ? c.bg : 'bg-stone-900/40 hover:bg-stone-900/40 opacity-50 cursor-not-allowed'} ${c.text} border ${canAfford ? c.border : 'border-stone-800'} rounded text-xs font-sans font-semibold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer relative group`}
+                            >
+                              <span className="flex items-center gap-1.5">
+                                <Sparkles className={`w-3.5 h-3.5 ${canAfford ? c.icon : 'text-stone-600'}`} />
+                                <span>{ability.icon} {ability.name}</span>
+                              </span>
+                              <span className={`text-[9px] font-sans ${canAfford ? 'text-stone-400' : 'text-stone-600'}`}>
+                                {ability.manaCost === 0 ? 'Free · ' : `${ability.manaCost} MP · `}{ability.stat.substring(0,3).toUpperCase()} scaled
+                              </span>
+                              {/* Tooltip */}
+                              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-stone-900 border border-stone-700 text-stone-300 text-[10px] font-sans p-2 rounded shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none leading-relaxed">
+                                {ability.tooltip}
+                              </span>
+                            </button>
+                          );
+                        })()}
+                        <button 
+                          onClick={() => executeCombatAction('dodge')}
+                          className="p-3 bg-stone-900 hover:bg-stone-850 text-stone-300 border border-stone-800 rounded text-xs font-sans font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Shield className="w-4 h-4 text-stone-400" /> Tactical Dodge
+                        </button>
+                      </div>
+                    ) : (
+                      /* DICE RESOLVING & TRANSITIONAL TEXT */
+                      <div className="bg-stone-900/50 border border-stone-850 rounded p-4 text-center">
+                        <p className="font-serif text-stone-400 italic animate-pulse text-sm">
+                          {combatPhase === 'player-roll' && "Rolling attack dice..."}
+                          {combatPhase === 'player-resolve' && "Resolving attack effect..."}
+                          {combatPhase === 'enemy-wait' && `${enemyStats.name} prepares to strike...`}
+                          {combatPhase === 'enemy-roll' && `${enemyStats.name} rolls attack dice...`}
+                          {combatPhase === 'enemy-resolve' && `Resolving ${enemyStats.name} attack...`}
+                        </p>
+                      </div>
+                    )}
 
                   </div>
                 ) : (
@@ -1894,8 +2299,8 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                 </div>
 
                 <div className={`absolute w-32 h-32 rounded-full border border-dashed transition-all duration-1000 flex items-center justify-center ${
-                  gameState === 'check-pending' 
-                    ? 'border-purple-500/20 bg-purple-950/5 animate-spin-slow' 
+                  gameState === 'check-pending' || (gameState === 'combat' && (combatPhase.includes('roll') || combatPhase.includes('resolve') || combatPhase === 'initiative-roll'))
+                    ? 'border-purple-500/35 bg-purple-950/10 animate-spin-slow' 
                     : 'border-stone-800/80'
                 }`}>
                   <div className="text-stone-950 opacity-10 text-6xl font-extrabold select-none">d20</div>
@@ -1905,10 +2310,24 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                   <div className={`w-28 h-28 flex items-center justify-center relative select-none cursor-pointer ${
                     diceRolling ? 'scale-110' : 'hover:scale-[1.03] transition-transform'
                   }`}
-                  onClick={gameState === 'check-pending' ? handleDiceRoll : undefined}
+                  onClick={
+                    gameState === 'check-pending' 
+                      ? handleDiceRoll 
+                      : (gameState === 'combat' && combatPhase === 'initiative-roll') 
+                        ? rollCombatInitiative 
+                        : undefined
+                  }
                   >
                     <svg viewBox="0 0 100 100" className={`w-full h-full drop-shadow-2xl transition-transform duration-300 ${
-                      diceRolling ? 'animate-spin text-purple-500' : 'text-amber-500'
+                      diceRolling 
+                        ? 'animate-spin text-purple-500' 
+                        : gameState === 'combat' && combatPhase.startsWith('enemy')
+                          ? 'text-purple-600'
+                          : rolledValue === 20 
+                            ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-pulse' 
+                            : rolledValue === 1 
+                              ? 'text-red-500' 
+                              : 'text-amber-500'
                     }`}>
                       <polygon points="50,5 90,30 90,70 50,95 10,70 10,30" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.5" />
                       <polygon points="50,5 50,95" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.4" />
@@ -1931,7 +2350,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                     </span>
                   </div>
 
-                  {rollResultMsg && (
+                  {rollResultMsg && gameState !== 'combat' && (
                     <div className="mt-4 text-center max-w-[240px] animate-ink-bleed">
                       <p className={`text-xs font-sans font-bold ${rollSuccess ? 'text-emerald-400' : 'text-red-400'}`}>
                         {rollSuccess ? 'SUCCESS' : 'FAILURE'}
@@ -1952,6 +2371,22 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                     <p className="text-[10px] text-purple-400 font-sans animate-pulse mt-3 text-center">
                       * Stat check challenge active. Roll!
                     </p>
+                  )}
+
+                  {gameState === 'combat' && combatRollDetails && (
+                    <div className="mt-3 text-center max-w-[240px] animate-ink-bleed">
+                      <p className="text-[10px] text-purple-400 font-sans font-bold uppercase tracking-wider">
+                        {combatPhase === 'initiative-roll' ? 'Initiative Roll' : combatPhase.startsWith('enemy') ? `${enemyStats.name}'s Action` : 'Your Action'}
+                      </p>
+                      <p className="text-[11px] font-sans text-stone-400 leading-relaxed mt-1">
+                        {combatRollDetails}
+                      </p>
+                      {rolledValue && (combatPhase.includes('resolve') || combatPhase === 'initiative-roll') && !diceRolling && (
+                        <p className={`text-xs font-sans font-bold mt-1 ${rolledValue === 20 ? 'text-yellow-400 font-black animate-pulse' : rolledValue === 1 ? 'text-red-500' : 'text-stone-200'}`}>
+                          Die roll: {rolledValue}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
