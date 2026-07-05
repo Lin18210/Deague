@@ -40,6 +40,10 @@ import PrologueScreen from './components/player/PrologueScreen';
 import SceneIllustration from './components/player/SceneIllustration';
 import MiniMap from './components/player/MiniMap';
 import { rollDice, rollD20 } from './utils/diceUtils';
+import PartyPanel from './components/combat/PartyPanel';
+import EnemyPanel from './components/combat/EnemyPanel';
+import InitiativeTracker from './components/combat/InitiativeTracker';
+import { DEFAULT_COMPANIONS, ENEMY_GROUPS, rollDiceNotation, getDexMod } from './data/companions';
 
 const STYLE_INJECTION = `
 @keyframes float-up {
@@ -577,6 +581,22 @@ export default function App() {
   const [isEnemyAttacking, setIsEnemyAttacking] = useState(false);
   const [enemyStats, setEnemyStats] = useState({ name: 'Shadow-Hound', ac: 14, attackMod: 4, damage: '1d6+3', dexMod: 2 });
 
+  // ── Party Combat System (BG3-style) ────────────────────────────────────────
+  const [party, setParty] = useState([]);           // All 4 party members (player + companions)
+  const [enemies, setEnemies] = useState([]);        // Enemy group (1-4 enemies)
+  const [initiativeOrder, setInitiativeOrder] = useState([]); // All combatants sorted by dex roll
+  const [activeInitiativeIndex, setActiveInitiativeIndex] = useState(0);
+  const [selectedTargetId, setSelectedTargetId] = useState(null); // Enemy id selected by player
+  const [companionActing, setCompanionActing] = useState(false); // Lock UI while companion acts
+  const initiativeOrderRef = useRef([]);
+  const enemiesRef = useRef([]);
+  const partyRef = useRef([]);
+  const activeInitiativeIndexRef = useRef(0);
+  useEffect(() => { initiativeOrderRef.current = initiativeOrder; }, [initiativeOrder]);
+  useEffect(() => { enemiesRef.current = enemies; }, [enemies]);
+  useEffect(() => { partyRef.current = party; }, [party]);
+  useEffect(() => { activeInitiativeIndexRef.current = activeInitiativeIndex; }, [activeInitiativeIndex]);
+
   const textEndRef = useRef(null);
   const activeCheckRef = useRef(null);
 
@@ -889,6 +909,92 @@ You MUST respond strictly with a valid JSON object matching this schema structur
     setIsAiLoading(false);
   };
 
+  /**
+   * Build player entity for party system from current character state
+   */
+  const buildPlayerEntity = (currentHp, currentMana) => {
+    const cls = CLASSES[selectedClass];
+    let dexBonus = 0;
+    inventory.forEach(item => {
+      if (item.equipped && item.statBonus && item.statBonus.dexterity) dexBonus += item.statBonus.dexterity;
+    });
+    return {
+      id: 'player',
+      name: cls.name,
+      class: selectedClass,
+      isPlayer: true,
+      emoji: '⚔️',
+      colorClass: 'amber',
+      hp: currentHp,
+      maxHp: maxHp,
+      mana: currentMana,
+      maxMana: maxMana,
+      ac: getClassAC(selectedClass),
+      stats: charStats,
+      faction: 'party',
+      statusEffects: [],
+    };
+  };
+
+  /**
+   * Initialize party combat: build party array, enemy group, roll initiative for all, sort.
+   */
+  const initializePartyCombat = (enemyGroupKey = 'shadow_hound_pack') => {
+    // Build party
+    const playerEntity = buildPlayerEntity(hp, mana);
+    const companions = DEFAULT_COMPANIONS.map(c => ({
+      ...c,
+      hp: c.maxHp,
+      mana: c.maxMana,
+      faction: 'party',
+      statusEffects: [],
+    }));
+    const fullParty = [playerEntity, ...companions];
+
+    // Build enemy group
+    const enemyGroup = (ENEMY_GROUPS[enemyGroupKey] || ENEMY_GROUPS.shadow_hound_pack).map(e => ({
+      ...e,
+      faction: 'enemy',
+      statusEffects: [],
+    }));
+
+    // Roll initiative: 1d20 + DEX mod for every combatant
+    const allCombatants = [
+      ...fullParty.map(m => ({
+        ...m,
+        initiativeRoll: Math.floor(Math.random() * 20) + 1,
+        dexMod: getDexMod(m),
+      })),
+      ...enemyGroup.map(e => ({
+        ...e,
+        initiativeRoll: Math.floor(Math.random() * 20) + 1,
+        dexMod: getDexMod(e),
+      }))
+    ].map(c => ({
+      ...c,
+      initiative: c.initiativeRoll + c.dexMod,
+    })).sort((a, b) => b.initiative - a.initiative || b.dexMod - a.dexMod);
+
+    setParty(fullParty);
+    setEnemies(enemyGroup);
+    setInitiativeOrder(allCombatants);
+    setActiveInitiativeIndex(0);
+    setSelectedTargetId(null);
+    setCompanionActing(false);
+
+    // Log the initiative rolls
+    const initLog = allCombatants.map(c =>
+      `🎲 ${c.name}: rolled ${c.initiativeRoll} + DEX(${c.dexMod >= 0 ? '+' : ''}${c.dexMod}) = ${c.initiative}`
+    );
+    setCombatLog([
+      `📋 Initiative Order Determined!`,
+      ...initLog,
+      `\n⚔️ ${allCombatants[0].name} acts first!`
+    ]);
+
+    return { party: fullParty, enemies: enemyGroup, order: allCombatants };
+  };
+
   const handleChoice = (choice) => {
     playSoundEffect('click');
     if (choice.check) {
@@ -898,11 +1004,15 @@ You MUST respond strictly with a valid JSON object matching this schema structur
       setRollResultMsg('');
     } else if (choice.combatStart) {
       setGameState('combat');
-      setCombatPhase('initiative-roll');
-      setEnemyHp(40);
-      setEnemyStats({ name: 'Shadow-Hound', ac: 14, attackMod: 4, damage: '1d6+3', dexMod: 2 });
-      setCombatRollDetails('Initiative Check: Click "Roll Initiative" to start combat.');
-      setCombatLog(["⚔️ A menacing Shadow-Hound emerges from the dark. Roll Initiative to begin!"]);
+      setCombatPhase('initiative-setup');
+      setCombatLog([]);
+      // Choose enemy group based on context
+      const groupKey = campaignMode === 'ai' ? 'shadow_hound_pack' : 'shadow_hound_pack';
+      const { order } = initializePartyCombat(groupKey);
+      // After a short delay, begin the first turn
+      setTimeout(() => {
+        startTurnForIndex(0, order);
+      }, 1200);
     } else {
       if (campaignMode === 'ai') {
         fetchNextAiNode(choice.text);
@@ -910,6 +1020,311 @@ You MUST respond strictly with a valid JSON object matching this schema structur
         advanceStory(choice.nextNode);
       }
     }
+  };
+
+  /**
+   * Start the turn for the combatant at `index` in `order`.
+   * If player → set phase to 'select-action'
+   * If companion → auto-execute companion AI
+   * If enemy → execute enemy attack
+   */
+  const startTurnForIndex = (index, order) => {
+    const safeOrder = order || initiativeOrderRef.current;
+    if (!safeOrder || safeOrder.length === 0) return;
+
+    // Skip dead combatants
+    let nextIndex = index % safeOrder.length;
+    let loopCount = 0;
+    while (safeOrder[nextIndex] && safeOrder[nextIndex].hp <= 0) {
+      nextIndex = (nextIndex + 1) % safeOrder.length;
+      loopCount++;
+      if (loopCount > safeOrder.length) {
+        // All combatants dead — should not happen, but bail
+        return;
+      }
+    }
+
+    setActiveInitiativeIndex(nextIndex);
+    const current = safeOrder[nextIndex];
+    if (!current) return;
+
+    if (current.faction === 'party') {
+      if (current.isPlayer) {
+        setCombatPhase('select-action');
+        setCombatRollDetails(`Your turn! Select a combat command.`);
+        setCompanionActing(false);
+      } else {
+        // Companion AI turn
+        setCompanionActing(true);
+        setCombatPhase('companion-acting');
+        setCombatRollDetails(`${current.name} is taking their turn...`);
+        setTimeout(() => {
+          executeCompanionTurn(current, nextIndex, safeOrder);
+        }, 800);
+      }
+    } else {
+      // Enemy turn
+      setCompanionActing(true);
+      setCombatPhase('enemy-wait');
+      setTimeout(() => {
+        executeEnemyGroupTurn(current, nextIndex, safeOrder);
+      }, 700);
+    }
+  };
+
+  /**
+   * Advance to the next combatant's turn.
+   */
+  const advanceInitiative = (currentIndex, currentOrder) => {
+    const safeOrder = currentOrder || initiativeOrderRef.current;
+    const nextRaw = (currentIndex + 1) % safeOrder.length;
+
+    // Check victory: all enemies dead
+    const currentEnemies = enemiesRef.current;
+    if (currentEnemies.every(e => e.hp <= 0)) {
+      resolvePartyVictory();
+      return;
+    }
+
+    // Check defeat: player + all companions dead
+    const currentParty = partyRef.current;
+    if (currentParty.every(m => m.hp <= 0)) {
+      resolvePartyDefeat();
+      return;
+    }
+
+    // Find next alive combatant
+    let nextIndex = nextRaw;
+    let loops = 0;
+    while (safeOrder[nextIndex] && safeOrder[nextIndex].hp <= 0) {
+      nextIndex = (nextIndex + 1) % safeOrder.length;
+      loops++;
+      if (loops > safeOrder.length) return;
+    }
+
+    setActiveInitiativeIndex(nextIndex);
+
+    // Sync initiative order hp from live party/enemies refs
+    const updatedOrder = safeOrder.map(entry => {
+      if (entry.faction === 'party') {
+        const liveParty = partyRef.current.find(m => m.id === entry.id);
+        return liveParty ? { ...entry, hp: liveParty.hp, mana: liveParty.mana, statusEffects: liveParty.statusEffects } : entry;
+      } else {
+        const liveEnemy = enemiesRef.current.find(e => e.id === entry.id);
+        return liveEnemy ? { ...entry, hp: liveEnemy.hp, statusEffects: liveEnemy.statusEffects } : entry;
+      }
+    });
+    setInitiativeOrder(updatedOrder);
+
+    startTurnForIndex(nextIndex, updatedOrder);
+  };
+
+  /**
+   * Execute an AI companion's turn.
+   */
+  const executeCompanionTurn = (companion, idx, currentOrder) => {
+    const currentEnemies = enemiesRef.current;
+    const currentParty = partyRef.current;
+
+    // Find alive enemies
+    const aliveEnemies = currentEnemies.filter(e => e.hp > 0);
+    if (aliveEnemies.length === 0) {
+      advanceInitiative(idx, currentOrder);
+      return;
+    }
+
+    let logMsg = '';
+    let updatedEnemies = [...currentEnemies];
+    let updatedParty = [...currentParty];
+
+    // Support behavior: heal if any ally critically wounded
+    if (companion.aiBehavior === 'support') {
+      const woundedAlly = currentParty.find(m => m.hp > 0 && m.hp / m.maxHp < 0.35 && m.id !== companion.id);
+      const healAbility = companion.abilities.find(a => a.type === 'heal');
+
+      if (woundedAlly && healAbility && companion.mana >= healAbility.manaCost) {
+        const healAmt = rollDiceNotation(healAbility.healAmount);
+        const newHp = Math.min(woundedAlly.maxHp, woundedAlly.hp + healAmt);
+        updatedParty = updatedParty.map(m => m.id === woundedAlly.id ? { ...m, hp: newHp } : m);
+
+        // Also update companion mana
+        updatedParty = updatedParty.map(m => m.id === companion.id
+          ? { ...m, mana: Math.max(0, m.mana - healAbility.manaCost) }
+          : m
+        );
+
+        logMsg = `💚 ${companion.name} casts ${healAbility.name} on ${woundedAlly.name}, restoring ${healAmt} HP! (${woundedAlly.hp} → ${newHp})`;
+        setActiveFlashEffect('green');
+        setTimeout(() => setActiveFlashEffect(''), 500);
+        playSoundEffect('success');
+        spawnDamagePopup(`+${healAmt}`, 'player', 'heal');
+        setParty(updatedParty);
+        setCombatLog(prev => [logMsg, ...prev]);
+
+        setTimeout(() => advanceInitiative(idx, currentOrder), 1600);
+        return;
+      }
+    }
+
+    // Attack: target lowest HP enemy
+    const target = aliveEnemies.reduce((lowest, e) => e.hp < lowest.hp ? e : lowest, aliveEnemies[0]);
+
+    // Roll attack
+    const attackRoll = Math.floor(Math.random() * 20) + 1;
+    const totalAttack = attackRoll + companion.attackMod;
+    const isCrit = attackRoll === 20;
+    const isMiss = attackRoll === 1;
+    const hit = isCrit || (!isMiss && totalAttack >= target.ac);
+
+    if (hit) {
+      let dmg = rollDiceNotation(companion.attackDamage);
+      if (isCrit) dmg *= 2;
+      const newHp = Math.max(0, target.hp - dmg);
+      updatedEnemies = currentEnemies.map(e => e.id === target.id ? { ...e, hp: newHp } : e);
+
+      logMsg = isCrit
+        ? `🔥 CRIT! ${companion.name} rolls ${attackRoll} — CRITICAL HIT on ${target.name} for ${dmg} damage!`
+        : `⚔️ ${companion.name} rolls ${attackRoll}+${companion.attackMod}=${totalAttack} vs AC ${target.ac} — HIT! Deals ${dmg} damage to ${target.name}.`;
+
+      playSoundEffect('hit');
+      setActiveCombatEffect('shake-monster');
+      setTimeout(() => setActiveCombatEffect(''), 400);
+      spawnDamagePopup(dmg.toString(), 'enemy', isCrit ? 'crit' : 'damage');
+
+      setEnemies(updatedEnemies);
+      setCombatLog(prev => [logMsg, ...prev]);
+
+      // Check if all enemies dead for victory
+      if (updatedEnemies.every(e => e.hp <= 0)) {
+        setTimeout(() => resolvePartyVictory(), 1000);
+        return;
+      }
+    } else {
+      logMsg = isMiss
+        ? `❌ ${companion.name} rolled a natural 1 — CRITICAL MISS! Their strike goes wide.`
+        : `💨 ${companion.name} rolled ${attackRoll}+${companion.attackMod}=${totalAttack} vs AC ${target.ac} — MISS!`;
+      playSoundEffect('fail');
+      setCombatLog(prev => [logMsg, ...prev]);
+    }
+
+    setTimeout(() => advanceInitiative(idx, currentOrder), 1400);
+  };
+
+  /**
+   * Execute an enemy's turn — picks a random living party member to attack.
+   */
+  const executeEnemyGroupTurn = (enemy, idx, currentOrder) => {
+    const currentParty = partyRef.current;
+    const aliveParty = currentParty.filter(m => m.hp > 0);
+
+    if (aliveParty.length === 0) {
+      resolvePartyDefeat();
+      return;
+    }
+
+    setCombatPhase('enemy-roll');
+    setCombatRollDetails(`${enemy.name} attacks...`);
+
+    // Pick random alive party member
+    const target = aliveParty[Math.floor(Math.random() * aliveParty.length)];
+
+    const attackRoll = Math.floor(Math.random() * 20) + 1;
+    const totalAttack = attackRoll + enemy.attackMod;
+    const isCrit = attackRoll === 20;
+    const isMiss = attackRoll === 1;
+    const hit = isCrit || (!isMiss && totalAttack >= target.ac);
+
+    setIsEnemyAttacking(true);
+    setTimeout(() => setIsEnemyAttacking(false), 350);
+
+    let updatedParty = [...currentParty];
+    let logMsg = '';
+
+    if (hit) {
+      let dmg = rollDiceNotation(enemy.damage);
+      if (isCrit) dmg *= 2;
+
+      // Apply rage damage reduction for barbarian companion
+      if (target.id === 'vorn' && target.statusEffects?.includes('raging')) {
+        dmg = Math.ceil(dmg / 2);
+      }
+
+      const newHp = Math.max(0, target.hp - dmg);
+      updatedParty = currentParty.map(m => m.id === target.id ? { ...m, hp: newHp } : m);
+
+      // If attacking player, also update main hp state
+      if (target.isPlayer) {
+        setHp(newHp);
+      }
+
+      logMsg = isCrit
+        ? `💀 CRIT! ${enemy.name} rolled ${attackRoll} — CRITICAL HIT on ${target.name} for ${dmg} damage!`
+        : `💥 ${enemy.name} rolled ${attackRoll}+${enemy.attackMod}=${totalAttack} vs AC ${target.ac} — HIT! ${target.name} takes ${dmg} damage.`;
+
+      playSoundEffect('fail');
+      setActiveFlashEffect('red');
+      setTimeout(() => setActiveFlashEffect(''), 500);
+      triggerShake();
+      spawnDamagePopup(dmg.toString(), target.isPlayer ? 'player' : 'companion', isCrit ? 'crit' : 'damage');
+
+      setParty(updatedParty);
+      setCombatLog(prev => [logMsg, ...prev]);
+
+      // Check full party defeat
+      if (updatedParty.every(m => m.hp <= 0)) {
+        setTimeout(() => resolvePartyDefeat(), 1200);
+        return;
+      }
+    } else {
+      logMsg = isMiss
+        ? `😅 ${enemy.name} rolled a 1 — CRITICAL MISS! Its attack swiped empty air.`
+        : `💨 ${enemy.name} rolled ${attackRoll}+${enemy.attackMod}=${totalAttack} vs AC ${target.ac} — MISS!`;
+      playSoundEffect('success');
+      setCombatLog(prev => [logMsg, ...prev]);
+    }
+
+    setTimeout(() => {
+      setCombatPhase('enemy-resolve');
+      setTimeout(() => advanceInitiative(idx, currentOrder), 700);
+    }, 1200);
+  };
+
+  /**
+   * Victory: all enemies defeated
+   */
+  const resolvePartyVictory = () => {
+    setTimeout(() => {
+      playSoundEffect('success');
+      setCombatPhase('victory');
+      setCombatBuffs({ battleCry: false, rage: false, huntersMarkActive: false, bardDebuff: false, enemyStunned: false });
+      setCompanionActing(false);
+      if (campaignMode === 'ai') {
+        setGameState('active');
+        const aliveCompanions = partyRef.current.filter(m => !m.isPlayer && m.hp > 0).map(m => m.name);
+        fetchNextAiNode(`Victory! The party defeated all enemies. Surviving companions: ${aliveCompanions.join(', ')}. Survey surroundings and check for loot.`);
+      } else {
+        setGameState('active');
+        advanceStory('victory_node');
+      }
+    }, 1000);
+  };
+
+  /**
+   * Defeat: player + all companions dead
+   */
+  const resolvePartyDefeat = () => {
+    setTimeout(() => {
+      setCombatPhase('defeat');
+      setCombatBuffs({ battleCry: false, rage: false, huntersMarkActive: false, bardDebuff: false, enemyStunned: false });
+      setCompanionActing(false);
+      if (campaignMode === 'ai') {
+        setGameState('active');
+        fetchNextAiNode(`The party was defeated. Describe a narrow escape or dramatic collapse.`);
+      } else {
+        setGameState('active');
+        advanceStory('vault_fail');
+      }
+    }, 1800);
   };
 
   const handleCustomActionSubmit = (e) => {
@@ -1311,7 +1726,28 @@ You MUST respond strictly with a valid JSON object matching this schema structur
   };
 
   const executeCombatAction = (action) => {
-    if (enemyHp <= 0 || hp <= 0 || diceRolling) return;
+    if (hp <= 0 || diceRolling || companionActing) return;
+
+    // Resolve which enemy to attack
+    const aliveEnemies = enemiesRef.current.filter(e => e.hp > 0);
+    if (aliveEnemies.length === 0) { resolvePartyVictory(); return; }
+
+    // Pick target: selectedTargetId or auto-target lowest HP
+    const targetEnemy = aliveEnemies.find(e => e.id === selectedTargetId) ||
+                        aliveEnemies.reduce((lowest, e) => e.hp < lowest.hp ? e : lowest, aliveEnemies[0]);
+
+    // Helper to apply damage to a target enemy and sync state
+    const applyDamageToEnemy = (targetId, dmg) => {
+      setEnemies(prev => prev.map(e => e.id === targetId ? { ...e, hp: Math.max(0, e.hp - dmg) } : e));
+    };
+
+    const currentInitIdx = activeInitiativeIndexRef.current;
+    const afterPlayerTurn = () => {
+      setTimeout(() => advanceInitiative(currentInitIdx, initiativeOrderRef.current), 1800);
+    };
+
+    // kept for legacy compat (not used in new party combat but referenced in reset)
+    const enemyHpCompat = enemiesRef.current.reduce((sum, e) => sum + e.hp, 0);
 
     let strBonus = 0, intBonus = 0, dexBonus = 0, wisBonus = 0, chaBonus = 0;
     inventory.forEach(item => {
@@ -1335,236 +1771,128 @@ You MUST respond strictly with a valid JSON object matching this schema structur
     if (action === 'strike') {
       setCombatPhase('player-roll');
       setCombatDiceType('attack');
-      
       const keyStat = getClassKeyStat(selectedClass);
       const statMod = modMap[keyStat];
-      const attackMod = statMod + 3; // base proficiency
-      setCombatRollDetails(`Weapon Strike Attack Roll: 1d20 + ${keyStat.substring(0,3).toUpperCase()} Mod (+${statMod}) + Prof (+3)`);
-      setCombatRollDC(enemyStats.ac);
-      
+      const attackMod = statMod + 3;
+      setCombatRollDetails(`Strike: 1d20 + ${keyStat.substring(0,3).toUpperCase()}(+${statMod}) + Prof(+3) vs AC ${targetEnemy.ac}`);
+      setCombatRollDC(targetEnemy.ac);
       let counter = 0;
       const interval = setInterval(() => {
         playSoundEffect('dice');
         setRolledValue(Math.floor(Math.random() * 20) + 1);
         counter++;
-        
         if (counter > 10) {
           clearInterval(interval);
-          
           const roll = Math.floor(Math.random() * 20) + 1;
           setRolledValue(roll);
-          
           const totalAttack = roll + attackMod;
-          let hit = totalAttack >= enemyStats.ac;
+          let hit = totalAttack >= targetEnemy.ac;
           if (roll === 20) hit = true;
           if (roll === 1) hit = false;
-          
           setCombatPhase('player-resolve');
-          
           if (hit) {
             playSoundEffect('hit');
             setIsPlayerAttacking(true);
             setTimeout(() => setIsPlayerAttacking(false), 350);
-            
             const isCrit = roll === 20;
             const damageNotation = getClassWeaponDamage(selectedClass);
-            let dmgRoll = rollDice(damageNotation);
-            let dmg = dmgRoll.total + statMod;
-            
-            if (combatBuffs.battleCry) {
-              dmg += 5;
-              setCombatBuffs(prev => ({ ...prev, battleCry: false }));
-            }
-            if (combatBuffs.rage) {
-              dmg += statMod;
-              setCombatBuffs(prev => ({ ...prev, rage: false }));
-            }
-            if (combatBuffs.huntersMarkActive) {
-              const markDmg = Math.floor(Math.random() * 6) + 1;
-              dmg += markDmg;
-              setCombatBuffs(prev => ({ ...prev, huntersMarkActive: false }));
-            }
-            
-            if (isCrit) {
-              dmg += rollDice(damageNotation).total;
-            }
-            
+            let dmg = rollDice(damageNotation).total + statMod;
+            if (combatBuffs.battleCry) { dmg += 5; setCombatBuffs(prev => ({ ...prev, battleCry: false })); }
+            if (combatBuffs.rage) { dmg += statMod; setCombatBuffs(prev => ({ ...prev, rage: false })); }
+            if (combatBuffs.huntersMarkActive) { dmg += Math.floor(Math.random() * 6) + 1; setCombatBuffs(prev => ({ ...prev, huntersMarkActive: false })); }
+            if (isCrit) dmg += rollDice(damageNotation).total;
             dmg = Math.max(1, dmg);
-            const newEnemyHp = Math.max(0, enemyHp - dmg);
-            setEnemyHp(newEnemyHp);
-            
             setActiveCombatEffect('shake-monster');
             setTimeout(() => setActiveCombatEffect(''), 550);
             spawnDamagePopup(dmg.toString(), 'enemy', isCrit ? 'crit' : 'damage');
-            
             const hitMsg = isCrit
-              ? `🔥 CRITICAL HIT! You rolled a natural 20! Your strike hits the ${enemyStats.name} for ${dmg} slashing damage!`
-              : `⚔️ You rolled ${roll} + ${attackMod} = ${totalAttack} vs AC ${enemyStats.ac} — HIT! You deal ${dmg} physical damage.`;
+              ? `🔥 CRIT! You rolled 20! Strike on ${targetEnemy.name} for ${dmg} damage!`
+              : `⚔️ Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${targetEnemy.ac} — HIT on ${targetEnemy.name}! ${dmg} damage.`;
             setCombatLog(prev => [hitMsg, ...prev]);
-            setCombatRollDetails(`Hit: rolled ${totalAttack} vs AC ${enemyStats.ac}. Deals ${dmg} damage.`);
-            
-            if (newEnemyHp <= 0) {
-              resolveCombatVictory();
-              return;
-            }
+            applyDamageToEnemy(targetEnemy.id, dmg);
           } else {
             playSoundEffect('fail');
             spawnDamagePopup('MISS!', 'enemy', 'miss');
             const missMsg = roll === 1
-              ? `❌ CRITICAL MISS! You rolled a 1 — your strike goes wildly wide of the ${enemyStats.name}.`
-              : `⚔️ You rolled ${roll} + ${attackMod} = ${totalAttack} vs AC ${enemyStats.ac} — MISS!`;
+              ? `❌ CRIT MISS! Your strike goes wildly wide of ${targetEnemy.name}.`
+              : `⚔️ Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${targetEnemy.ac} — MISS on ${targetEnemy.name}!`;
             setCombatLog(prev => [missMsg, ...prev]);
-            setCombatRollDetails(`Miss: rolled ${totalAttack} vs AC ${enemyStats.ac}.`);
           }
-          
-          setTimeout(() => {
-            triggerEnemyRetaliation();
-          }, 1800);
+          afterPlayerTurn();
         }
       }, 75);
       
     } else if (action === 'class_ability') {
       const ability = CLASS_ABILITIES[selectedClass];
       const cost = ability.manaCost;
-      
       if (cost > 0 && mana < cost) {
         playSoundEffect('fail');
         setCombatLog(prev => [`⚠️ Not enough mana for ${ability.name}! (Need ${cost} MP)`, ...prev]);
         return;
       }
-      
       if (cost > 0) setMana(prev => Math.max(0, prev - cost));
-      
       if (selectedClass === 'warrior' || selectedClass === 'barbarian' || selectedClass === 'ranger') {
         playSoundEffect('magic');
         setActiveFlashEffect('purple');
         setTimeout(() => setActiveFlashEffect(''), 500);
-        
-        let logMsg = "";
-        if (selectedClass === 'warrior') {
-          setCombatBuffs(prev => ({ ...prev, battleCry: true }));
-          logMsg = `⚔️ BATTLE CRY! You raise your shield and bellow a terrifying cry. Your next physical attack gains +5 damage!`;
-        } else if (selectedClass === 'barbarian') {
-          setCombatBuffs(prev => ({ ...prev, rage: true }));
-          logMsg = `🔥 BERSERKER RAGE! You enter a furious rage. Incoming damage is halved and your next attack deals extra damage!`;
-        } else if (selectedClass === 'ranger') {
-          setCombatBuffs(prev => ({ ...prev, huntersMarkActive: true }));
-          logMsg = `🎯 HUNTER'S MARK! You focus your quarry eyes on the ${enemyStats.name}. Your next attack deals +1d6 bonus damage.`;
-        }
-        
+        let logMsg = '';
+        if (selectedClass === 'warrior') { setCombatBuffs(prev => ({ ...prev, battleCry: true })); logMsg = `⚔️ BATTLE CRY! Your next physical attack gains +5 damage!`; }
+        else if (selectedClass === 'barbarian') { setCombatBuffs(prev => ({ ...prev, rage: true })); logMsg = `🔥 BERSERKER RAGE! Incoming damage halved, next attack boosted!`; }
+        else if (selectedClass === 'ranger') { setCombatBuffs(prev => ({ ...prev, huntersMarkActive: true })); logMsg = `🎯 HUNTER'S MARK on ${targetEnemy.name}! Your next attack deals +1d6 bonus damage.`; }
         setCombatLog(prev => [logMsg, ...prev]);
         setCombatPhase('player-resolve');
         setCombatRollDetails(`Ability Activated: ${ability.name}`);
-        
-        setTimeout(() => {
-          triggerEnemyRetaliation();
-        }, 1500);
-        
+        afterPlayerTurn();
       } else {
         setCombatPhase('player-roll');
         setCombatDiceType('attack');
-        
         const keyStat = getClassKeyStat(selectedClass);
         const statMod = modMap[keyStat];
         const attackMod = statMod + 3;
-        
-        setCombatRollDetails(`Spell Attack (${ability.name}): 1d20 + ${keyStat.substring(0,3).toUpperCase()} Mod (+${statMod}) + Prof (+3)`);
-        setCombatRollDC(enemyStats.ac);
-        
+        setCombatRollDetails(`Spell (${ability.name}): 1d20+${keyStat.substring(0,3).toUpperCase()}(+${statMod})+Prof(+3) vs AC ${targetEnemy.ac}`);
+        setCombatRollDC(targetEnemy.ac);
         let counter = 0;
         const interval = setInterval(() => {
           playSoundEffect('dice');
           setRolledValue(Math.floor(Math.random() * 20) + 1);
           counter++;
-          
           if (counter > 10) {
             clearInterval(interval);
-            
             const roll = Math.floor(Math.random() * 20) + 1;
             setRolledValue(roll);
-            
             const totalAttack = roll + attackMod;
             const isCrit = roll === 20;
-            let hit = totalAttack >= enemyStats.ac;
+            let hit = totalAttack >= targetEnemy.ac;
             if (roll === 20) hit = true;
             if (roll === 1) hit = false;
-            
             setCombatPhase('player-resolve');
-            
             if (hit) {
               playSoundEffect('magic');
               setActiveFlashEffect('purple');
               setTimeout(() => setActiveFlashEffect(''), 550);
-              
-              let dmg = 0;
-              let logMsg = "";
-              
-              if (selectedClass === 'mage') {
-                dmg = rollDice('3d6').total + statMod;
-                logMsg = `✨ ARCANE SURGE! You channel raw cosmic energies. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} arcane damage.`;
-              } else if (selectedClass === 'rogue') {
-                dmg = rollDice('2d6').total + statMod;
-                logMsg = `🗡️ SNEAK ATTACK! You slip behind the ${enemyStats.name} and strike. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} sneak damage.`;
-              } else if (selectedClass === 'paladin') {
-                dmg = rollDice('3d8').total + statMod;
-                setHp(prev => Math.min(maxHp, prev + 8));
-                spawnDamagePopup('+8', 'player', 'heal');
-                logMsg = `✝️ DIVINE SMITE! Your blade burns with holy light. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} radiant damage and restores 8 HP.`;
-              } else if (selectedClass === 'cleric') {
-                dmg = rollDice('2d8').total + statMod;
-                logMsg = `🔥 SACRED FLAME! A column of divine fire falls from above. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} radiant damage.`;
-              } else if (selectedClass === 'bard') {
-                dmg = rollDice('1d8').total + statMod;
-                setCombatBuffs(prev => ({ ...prev, bardDebuff: true }));
-                logMsg = `🎵 VICIOUS MOCKERY! You sling biting insults. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} psychic damage and weakens the foe.`;
-              } else if (selectedClass === 'druid') {
-                dmg = rollDice('2d6').total + statMod;
-                logMsg = `🌿 THORN WHIP! A thorny vine lashes out. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} piercing nature damage.`;
-              } else if (selectedClass === 'monk') {
-                dmg = rollDice('1d8').total + statMod;
-                const stun = Math.random() < 0.45;
-                if (stun) {
-                  setCombatBuffs(prev => ({ ...prev, enemyStunned: true }));
-                }
-                logMsg = `👊 STUNNING STRIKE! Ki-charged fist strikes target. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} damage${stun ? ' and STUNS the foe!' : '.'}`;
-              } else if (selectedClass === 'sorcerer') {
-                dmg = rollDice('2d8').total + statMod;
-                const elements = ['fire', 'frost', 'lightning', 'acid'];
-                const ele = elements[Math.floor(Math.random() * elements.length)];
-                logMsg = `⚡ CHAOS BOLT! Wild ${ele} energy erupts. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} elemental damage.`;
-              } else if (selectedClass === 'warlock') {
-                dmg = rollDice('2d10').total + statMod;
-                logMsg = `🌑 ELDRITCH BLAST! A beam of crackling purple energy hits. Rolled ${roll}+${attackMod}=${totalAttack} vs AC ${enemyStats.ac} — HIT! Deals ${dmg} necrotic damage.`;
-              }
-              
+              let dmg = 0; let logMsg = '';
+              if (selectedClass === 'mage') { dmg = rollDice('3d6').total + statMod; logMsg = `✨ ARCANE SURGE on ${targetEnemy.name}! ${totalAttack} vs AC ${targetEnemy.ac} — HIT! ${dmg} arcane dmg.`; }
+              else if (selectedClass === 'rogue') { dmg = rollDice('2d6').total + statMod; logMsg = `🗡️ SNEAK ATTACK on ${targetEnemy.name}! ${totalAttack} vs AC ${targetEnemy.ac} — HIT! ${dmg} sneak dmg.`; }
+              else if (selectedClass === 'paladin') { dmg = rollDice('3d8').total + statMod; setHp(prev => Math.min(maxHp, prev + 8)); spawnDamagePopup('+8', 'player', 'heal'); logMsg = `✝️ DIVINE SMITE on ${targetEnemy.name}! ${dmg} radiant dmg + 8 HP restored.`; }
+              else if (selectedClass === 'cleric') { dmg = rollDice('2d8').total + statMod; logMsg = `🔥 SACRED FLAME on ${targetEnemy.name}! ${dmg} radiant dmg.`; }
+              else if (selectedClass === 'bard') { dmg = rollDice('1d8').total + statMod; setCombatBuffs(prev => ({ ...prev, bardDebuff: true })); logMsg = `🎵 VICIOUS MOCKERY on ${targetEnemy.name}! ${dmg} psychic dmg, foe weakened.`; }
+              else if (selectedClass === 'druid') { dmg = rollDice('2d6').total + statMod; logMsg = `🌿 THORN WHIP on ${targetEnemy.name}! ${dmg} nature dmg.`; }
+              else if (selectedClass === 'monk') { dmg = rollDice('1d8').total + statMod; const stun = Math.random() < 0.45; if (stun) setCombatBuffs(prev => ({ ...prev, enemyStunned: true })); logMsg = `👊 STUNNING STRIKE on ${targetEnemy.name}! ${dmg} dmg${stun ? ' — STUNNED!' : '.'}`; }
+              else if (selectedClass === 'sorcerer') { dmg = rollDice('2d8').total + statMod; const ele = ['fire','frost','lightning','acid'][Math.floor(Math.random()*4)]; logMsg = `⚡ CHAOS BOLT (${ele}) on ${targetEnemy.name}! ${dmg} elemental dmg.`; }
+              else if (selectedClass === 'warlock') { dmg = rollDice('2d10').total + statMod; logMsg = `🌑 ELDRITCH BLAST on ${targetEnemy.name}! ${dmg} necrotic dmg.`; }
               if (isCrit) dmg = dmg * 2;
-              
-              const newEnemyHp = Math.max(0, enemyHp - dmg);
-              setEnemyHp(newEnemyHp);
-              
               setActiveCombatEffect('shake-monster');
               setTimeout(() => setActiveCombatEffect(''), 500);
               spawnDamagePopup(dmg.toString(), 'enemy', isCrit ? 'crit' : 'damage');
-              setCombatLog(prev => [isCrit ? `🔥 CRITICAL HIT! ${logMsg}` : logMsg, ...prev]);
-              setCombatRollDetails(`Spell Hit: rolled ${totalAttack} vs AC ${enemyStats.ac}. Deals ${dmg} damage.`);
-              
-              if (newEnemyHp <= 0) {
-                resolveCombatVictory();
-                return;
-              }
+              setCombatLog(prev => [isCrit ? `🔥 CRIT! ${logMsg}` : logMsg, ...prev]);
+              applyDamageToEnemy(targetEnemy.id, dmg);
             } else {
               playSoundEffect('fail');
               spawnDamagePopup('MISS!', 'enemy', 'miss');
-              const missMsg = roll === 1
-                ? `❌ Spell fizzled! You rolled a natural 1 — the arcane energy dispersed harmlessly.`
-                : `✨ You rolled ${roll} + ${attackMod} = ${totalAttack} vs AC ${enemyStats.ac} — MISS! Your spell goes wide.`;
+              const missMsg = roll === 1 ? `❌ Spell fizzled! Natural 1.` : `✨ Rolled ${totalAttack} vs AC ${targetEnemy.ac} — MISS on ${targetEnemy.name}!`;
               setCombatLog(prev => [missMsg, ...prev]);
-              setCombatRollDetails(`Spell Miss: rolled ${totalAttack} vs AC ${enemyStats.ac}.`);
             }
-            
-            setTimeout(() => {
-              triggerEnemyRetaliation();
-            }, 1800);
+            afterPlayerTurn();
           }
         }, 75);
       }
@@ -1572,38 +1900,29 @@ You MUST respond strictly with a valid JSON object matching this schema structur
     } else if (action === 'dodge') {
       setCombatPhase('player-roll');
       setCombatDiceType('dodge');
-      
-      const dodgeDC = 10 + enemyStats.attackMod;
-      setCombatRollDetails(`Tactical Dodge Check: 1d20 + DEX Mod (+${dexMod}) vs DC ${dodgeDC}`);
+      const aliveEnemiesList = enemiesRef.current.filter(e => e.hp > 0);
+      const avgAtk = aliveEnemiesList.length > 0 ? Math.round(aliveEnemiesList.reduce((s,e)=>s+e.attackMod,0)/aliveEnemiesList.length) : 4;
+      const dodgeDC = 10 + avgAtk;
+      setCombatRollDetails(`Tactical Dodge: 1d20 + DEX(+${dexMod}) vs DC ${dodgeDC}`);
       setCombatRollDC(dodgeDC);
-      
       let counter = 0;
       const interval = setInterval(() => {
         playSoundEffect('dice');
         setRolledValue(Math.floor(Math.random() * 20) + 1);
         counter++;
-        
         if (counter > 10) {
           clearInterval(interval);
-          
           const roll = Math.floor(Math.random() * 20) + 1;
           setRolledValue(roll);
-          
           const total = roll + dexMod;
           const passed = total >= dodgeDC;
-          
           setCombatPhase('player-resolve');
           playSoundEffect(passed ? 'success' : 'fail');
-          
           const logMsg = passed
-            ? `💨 Evade Prep: You rolled ${roll} + ${dexMod} = ${total} vs DC ${dodgeDC} — SUCCESS! You focus your reflexes. Enemy attack will miss.`
-            : `⚠️ Evade Prep: You rolled ${roll} + ${dexMod} = ${total} vs DC ${dodgeDC} — FAILED! You stumbled.`;
+            ? `💨 Dodge: Rolled ${roll}+${dexMod}=${total} vs DC ${dodgeDC} — SUCCESS! You brace to evade the next incoming strike.`
+            : `⚠️ Dodge: Rolled ${roll}+${dexMod}=${total} vs DC ${dodgeDC} — FAILED! You stumbled.`;
           setCombatLog(prev => [logMsg, ...prev]);
-          setCombatRollDetails(`Dodge Check: rolled ${total} vs DC ${dodgeDC}. ${passed ? 'Dodge Ready!' : 'Dodge Failed!'}`);
-          
-          setTimeout(() => {
-            triggerEnemyRetaliation(passed, dexMod);
-          }, 1800);
+          afterPlayerTurn();
         }
       }, 75);
     }
@@ -1924,77 +2243,103 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                   <div className="space-y-6 animate-ink-bleed">
                     <div className="text-center space-y-2">
                       <span className="text-xs font-sans font-bold tracking-widest text-red-500 uppercase flex items-center justify-center gap-1">
-                        <ShieldAlert className="w-4 h-4 animate-pulse" /> Combat Encounters
+                        <ShieldAlert className="w-4 h-4 animate-pulse" /> Combat Encounters — Party vs Enemies
                       </span>
                       <h3 className="text-2xl font-bold text-stone-100 uppercase tracking-wider font-sans">
-                        BATTLE: {enemyStats.name}
+                        {enemies.length > 0 ? enemies.map(e => e.name).join(' + ') : 'Battle!'}
                       </h3>
-                      {combatPhase !== 'initiative-roll' && (
+                      {(combatPhase !== 'initiative-setup') && (
                         <p className="text-[10px] text-stone-500 font-sans uppercase tracking-widest">
-                          Phase: {combatPhase === 'select-action' ? "Your Turn (Command Select)" : combatPhase.startsWith('player') ? "Your Action" : `${enemyStats.name}'s Action`}
+                          {combatPhase === 'select-action'
+                            ? '⚔️ YOUR TURN — Choose an action below'
+                            : combatPhase === 'companion-acting'
+                              ? `🤝 ${initiativeOrder[activeInitiativeIndex]?.name ?? 'Companion'}'s Turn — Acting...`
+                              : combatPhase.startsWith('enemy')
+                                ? `👹 Enemy's Action`
+                                : combatPhase === 'initiative-setup'
+                                  ? '🎲 Rolling Initiative...'
+                                  : `Phase: ${combatPhase}`
+                          }
                         </p>
                       )}
                     </div>
 
-                    <div className="bg-stone-950/80 border border-purple-900/40 rounded-xl p-6 flex flex-col md:flex-row items-center justify-around gap-6 relative min-h-[160px] overflow-hidden">
-                      
-                      <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
-                        {damagePopups.map((pop) => (
-                          <div key={pop.id} className={`text-xl font-sans animate-damage absolute ${pop.color}`}>
-                            {pop.text}
+                    {/* Initiative Tracker */}
+                    {initiativeOrder.length > 0 && (
+                      <InitiativeTracker
+                        initiativeOrder={initiativeOrder}
+                        activeIndex={activeInitiativeIndex}
+                      />
+                    )}
+
+                    {/* Main Combat Arena: Party | Log | Enemies */}
+                    <div className="flex gap-3 min-h-[280px]">
+
+                      {/* Party Panel (left) */}
+                      {party.length > 0 && (
+                        <div className="flex-shrink-0">
+                          <PartyPanel
+                            party={party}
+                            activeEntityId={initiativeOrder[activeInitiativeIndex]?.id}
+                          />
+                        </div>
+                      )}
+
+                      {/* Center: damage popups + combat log */}
+                      <div className="flex-1 flex flex-col gap-3 min-w-0">
+                        {/* Damage Popups */}
+                        <div className="relative h-10 overflow-visible">
+                          <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+                            {damagePopups.map((pop) => (
+                              <div key={pop.id} className={`text-xl font-sans animate-damage absolute ${pop.color}`}>
+                                {pop.text}
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
+
+                        {/* Phase status banner */}
+                        {(combatPhase === 'initiative-setup' || combatPhase === 'companion-acting') && (
+                          <div className="bg-stone-950/80 border border-amber-900/40 rounded-lg px-4 py-3 text-center">
+                            <p className="text-xs text-amber-400 font-sans animate-pulse">
+                              {combatPhase === 'initiative-setup' ? '🎲 Rolling initiative for all combatants...' : `⏳ ${initiativeOrder[activeInitiativeIndex]?.name ?? 'Companion'} is acting...`}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Combat Log */}
+                        <div className="flex-1 bg-stone-900/60 rounded border border-stone-800 p-4 overflow-y-auto scrollbar-parchment font-sans text-xs space-y-2">
+                          {combatLog.length === 0 && (
+                            <p className="text-stone-600 italic text-center">Combat begins...</p>
+                          )}
+                          {combatLog.map((log, index) => (
+                            <p key={index} className={`text-stone-300 leading-relaxed border-l-2 pl-2 ${
+                              log.startsWith('🎲') || log.startsWith('📋') ? 'border-amber-600/70 text-amber-200 font-semibold' :
+                              log.startsWith('⚔️') ? 'border-amber-600/70 text-amber-200' :
+                              log.startsWith('💥') || log.startsWith('💀') ? 'border-red-800/80 text-red-300' :
+                              log.startsWith('💚') ? 'border-green-700/70 text-green-300' :
+                              log.startsWith('✨') || log.startsWith('🔮') || log.startsWith('⚡') ? 'border-purple-700/60 text-purple-200' :
+                              log.startsWith('🔥') ? 'border-orange-700/60 text-orange-300' :
+                              'border-purple-800/40'
+                            }`}>
+                              {log}
+                            </p>
+                          ))}
+                        </div>
                       </div>
 
-                      {/* Player Avatar Card */}
-                      <div className={`flex flex-col items-center gap-2 transition-all duration-300 ${
-                        isPlayerAttacking ? 'animate-player-strike' : ''
-                      } ${combatPhase === 'select-action' ? 'scale-105' : 'opacity-80'}`}>
-                        <div className={`w-16 h-16 rounded-full bg-stone-900 border-2 border-amber-500 flex items-center justify-center relative shadow-lg ${
-                          activeCombatEffect === 'spell-cast' ? 'scale-110 ring-4 ring-indigo-500 transition-all' : ''
-                        }`}>
-                          <User className="w-8 h-8 text-amber-500" />
+                      {/* Enemy Panel (right) */}
+                      {enemies.length > 0 && (
+                        <div className="flex-shrink-0">
+                          <EnemyPanel
+                            enemies={enemies}
+                            activeEntityId={initiativeOrder[activeInitiativeIndex]?.id}
+                            selectedTargetId={selectedTargetId}
+                            isPlayerTurn={combatPhase === 'select-action'}
+                            onSelectTarget={setSelectedTargetId}
+                          />
                         </div>
-                        <span className="text-xs font-sans font-bold">{CLASSES[selectedClass].name}</span>
-                        <span className="text-xs font-sans text-stone-400">HP: {hp}/{maxHp}</span>
-                        <span className="text-[9px] font-sans text-stone-500">AC: {getClassAC(selectedClass)}</span>
-                      </div>
-
-                      <div className="text-lg font-sans font-semibold text-stone-600">VS</div>
-
-                      {/* Enemy Monster Card */}
-                      <div className={`flex flex-col items-center gap-2 transition-all duration-300 ${
-                        isEnemyAttacking ? 'animate-monster-strike' : ''
-                      } ${activeCombatEffect === 'shake-monster' ? 'animate-monster-shake' : ''}`}>
-                        <div className={`w-20 h-20 rounded-full bg-stone-900 border-2 border-purple-600 flex items-center justify-center overflow-hidden relative shadow-lg ${
-                          combatPhase.startsWith('enemy') ? 'ring-2 ring-red-500/50' : ''
-                        }`}>
-                          <svg className="w-12 h-12 text-purple-500" viewBox="0 0 100 100">
-                            <polygon points="50,15 90,50 50,85 10,50" fill="none" stroke="currentColor" strokeWidth="3" />
-                            <circle cx="50" cy="50" r="14" fill="currentColor" className="animate-pulse" />
-                          </svg>
-                        </div>
-                        <span className="text-xs font-sans font-bold text-purple-400">{enemyStats.name}</span>
-                        <div className="w-32 bg-stone-800 h-2 rounded overflow-hidden">
-                          <div className="bg-purple-600 h-full transition-all duration-300" style={{ width: `${(enemyHp / maxEnemyHp) * 100}%` }} />
-                        </div>
-                        <span className="text-[10px] font-sans text-stone-400">Enemy HP: {enemyHp}/{maxEnemyHp}</span>
-                        <span className="text-[9px] font-sans text-stone-500">AC: {enemyStats.ac}</span>
-                      </div>
-
-                    </div>
-
-                    <div className="bg-stone-900/60 rounded border border-stone-800 p-4 h-32 overflow-y-auto scrollbar-parchment font-sans text-xs space-y-2">
-                      {combatLog.map((log, index) => (
-                        <p key={index} className={`text-stone-300 leading-relaxed border-l-2 pl-2 ${
-                          log.startsWith('🎲') || log.startsWith('⚔️') ? 'border-amber-600/70 text-amber-200 font-semibold' :
-                          log.startsWith('💥') || log.startsWith('💀') ? 'border-red-800/80 text-red-300' :
-                          log.startsWith('✨') || log.startsWith('🔮') ? 'border-purple-700/60 text-purple-200' :
-                          'border-purple-800/40'
-                        }`}>
-                          {log}
-                        </p>
-                      ))}
+                      )}
                     </div>
 
                     {/* Active buff indicators */}
@@ -2019,20 +2364,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                     )}
 
                     {/* Combat Commands Conditional Phase Render */}
-                    {combatPhase === 'initiative-roll' ? (
-                      <div className="flex justify-center w-full py-2">
-                        <button 
-                          onClick={rollCombatInitiative}
-                          disabled={diceRolling}
-                          className={`px-8 py-4 w-full max-w-md bg-gradient-to-r from-purple-800 to-indigo-900 text-stone-100 hover:from-purple-700 hover:to-indigo-800 border border-purple-500 rounded-lg text-sm font-sans font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-3 cursor-pointer shadow-lg shadow-purple-950/50 hover:scale-[1.02] active:scale-[0.98] ${
-                            diceRolling ? 'opacity-70 cursor-not-allowed' : ''
-                          }`}
-                        >
-                          <Dice5 className={`w-5 h-5 ${diceRolling ? 'animate-spin' : ''}`} />
-                          {diceRolling ? "Rolling Initiative..." : "Roll d20 Initiative!"}
-                        </button>
-                      </div>
-                    ) : combatPhase === 'select-action' ? (
+                    {combatPhase === 'select-action' ? (
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <button 
                           onClick={() => executeCombatAction('strike')}
