@@ -2330,7 +2330,16 @@ You MUST respond strictly with a valid JSON object matching this schema structur
 
                       {/* Enemy Panel (right) */}
                       {enemies.length > 0 && (
-                        <div className="flex-shrink-0">
+                        <div className={`flex-shrink-0 rounded-xl transition-all duration-300 ${
+                          combatPhase === 'select-action'
+                            ? 'ring-2 ring-yellow-500/40 shadow-lg shadow-yellow-950/30 p-1'
+                            : 'p-1'
+                        }`}>
+                          {combatPhase === 'select-action' && (
+                            <p className="text-[9px] font-sans font-bold text-yellow-400 tracking-widest uppercase text-center mb-1 animate-pulse">
+                              👆 Click to Target
+                            </p>
+                          )}
                           <EnemyPanel
                             enemies={enemies}
                             activeEntityId={initiativeOrder[activeInitiativeIndex]?.id}
@@ -2364,6 +2373,39 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                     )}
 
                     {/* Combat Commands Conditional Phase Render */}
+                    {combatPhase === 'select-action' && (() => {
+                      const aliveEnemies = enemies.filter(e => e.hp > 0);
+                      const currentTarget = aliveEnemies.find(e => e.id === selectedTargetId);
+                      const autoTarget = !currentTarget && aliveEnemies.length > 0
+                        ? aliveEnemies.reduce((low, e) => e.hp < low.hp ? e : low, aliveEnemies[0])
+                        : null;
+                      return (
+                        <div className="bg-stone-950/70 border border-stone-800/60 rounded-lg px-4 py-2 flex items-center justify-between gap-3">
+                          <span className="text-[10px] font-sans text-stone-500 uppercase tracking-widest">Target</span>
+                          {currentTarget ? (
+                            <span className="flex items-center gap-1.5 text-xs font-sans font-bold text-yellow-300">
+                              <span>{currentTarget.emoji}</span>
+                              <span>{currentTarget.name}</span>
+                              <span className="text-[9px] text-yellow-500/60">({currentTarget.hp}/{currentTarget.maxHp} HP)</span>
+                              <button
+                                onClick={() => setSelectedTargetId(null)}
+                                className="ml-1 text-[9px] text-stone-500 hover:text-red-400 transition-colors cursor-pointer"
+                                title="Clear target"
+                              >✕</button>
+                            </span>
+                          ) : autoTarget ? (
+                            <span className="flex items-center gap-1.5 text-xs font-sans text-stone-400 italic">
+                              <span>{autoTarget.emoji}</span>
+                              <span>{autoTarget.name}</span>
+                              <span className="text-[9px] text-amber-600/70">(auto — lowest HP)</span>
+                            </span>
+                          ) : (
+                            <span className="text-xs font-sans text-red-400 italic">No enemies remaining</span>
+                          )}
+                          <span className="text-[9px] text-stone-600 font-sans hidden sm:block">Click an enemy card →</span>
+                        </div>
+                      );
+                    })()}
                     {combatPhase === 'select-action' ? (
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <button 
