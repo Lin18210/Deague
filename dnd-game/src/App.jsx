@@ -44,6 +44,7 @@ import PartyPanel from './components/combat/PartyPanel';
 import EnemyPanel from './components/combat/EnemyPanel';
 import InitiativeTracker from './components/combat/InitiativeTracker';
 import { DEFAULT_COMPANIONS, ENEMY_GROUPS, rollDiceNotation, getDexMod } from './data/companions';
+import { STORY_NODES } from './data/storyNodes';
 
 const STYLE_INJECTION = `
 @keyframes float-up {
@@ -333,148 +334,7 @@ const CLASSES = {
   }
 };
 
-const STORY_NODES = {
-  intro: {
-    title: "An Outpost Under Shadow",
-    text: "The campfire crackles weakly against the freezing gales sealing the High Pass. You gather your traveling supplies, your knuckles aching from the bite of the sub-zero wind. Beneath your leather boots, a rhythmic thrum shakes the ancient stone foundation of the mountain cave. Deep in the forgotten chambers below, a magic seal has burst. Runes on the walls are bleeding light.",
-    visualType: "hearth",
-    choices: [
-      { text: "Equip your gear and step closer to the pulsing runestones.", nextNode: "approach_seal" },
-      { text: "Recite an ancient warding incantation to stabilize the tremors.", nextNode: "stabilize_ward" }
-    ]
-  },
-  approach_seal: {
-    title: "The Bleeding Runes",
-    text: "As you step near, the runic inscriptions glow with blinding lavender fire. The scent of hot ozone fills your lungs. Suddenly, a violent fracture splits the cave's stone portal. Through the dense cloud of stone dust and sparks, you hear a mechanical grind of gears, followed by a menacing, inhuman growl.",
-    visualType: "arcane",
-    choices: [
-      { text: "[DEXTERITY CHECK] Vault back to safety before the portal collapses!", check: { stat: "dexterity", difficulty: 12, successNode: "vault_success", failNode: "vault_fail" } },
-      { text: "[STRENGTH CHECK] Plant your shield and withstand the seismic shockwave!", check: { stat: "strength", difficulty: 13, successNode: "shield_success", failNode: "shield_fail" } }
-    ]
-  },
-  stabilize_ward: {
-    title: "Aether Restabilization",
-    text: "Focusing your spiritual reserves, you sketch geometric arcane lines in the air. The raw, bleeding magic of the runestones begins to feed on your spellwork. The vibrations begin to harmonize, but the seals are too old—the gate still opens, revealing a dark stone staircase.",
-    visualType: "arcane",
-    choices: [
-      { text: "[INTELLIGENCE CHECK] Decode the shimmering runic equations to lock the inner threshold.", check: { stat: "intelligence", difficulty: 13, successNode: "lock_success", failNode: "lock_fail" } },
-      { text: "Light a torch and cautiously descend the dark staircase.", nextNode: "descent_darkness" }
-    ]
-  },
-  vault_success: {
-    title: "Lightfoot Acrobatics",
-    text: "With a clean leap, you propel yourself backward. Heavy stone monoliths crash exactly where you were standing, throwing shards of granite everywhere. In the dust, you spot a secret side passageway leading deep into the crypt.",
-    visualType: "hearth",
-    choices: [
-      { text: "Enter the side passageway.", nextNode: "descent_darkness" }
-    ]
-  },
-  vault_fail: {
-    title: "Trapped in the Debris",
-    text: "You stumble over loose slate! A heavy shard of ancient masonry clips your shoulder, pinning your coat. You pull yourself free, but the impact leaves you winded, and your armor is dented.",
-    visualType: "hearth",
-    damage: 6,
-    choices: [
-      { text: "Recover your balance and inspect the breach.", nextNode: "encounter_hound" }
-    ]
-  },
-  shield_success: {
-    title: "Immovable Bastion",
-    text: "You dig your boots into the stone. The kinetic blast ripples against your defensive guard, creating brilliant sparks but leaving you completely unharmed. You look forward; the path into the crypt lies clear.",
-    visualType: "hearth",
-    choices: [
-      { text: "March forward through the broken threshold.", nextNode: "descent_darkness" }
-    ]
-  },
-  shield_fail: {
-    title: "Crushed Defenses",
-    text: "The sheer kinetic energy is immense. Your shield arm is slammed backward into your chest, cracking your guard. You are thrown onto the wet cavern floor as the cave entrance collapses behind you.",
-    visualType: "hearth",
-    damage: 8,
-    choices: [
-      { text: "Stagger to your feet and search for an exit.", nextNode: "encounter_hound" }
-    ]
-  },
-  lock_success: {
-    title: "The Glyphs Sealed",
-    text: "Your fingers trace the ancient glyphs, altering their core parameters. The wild purple portal stabilizes, crystallizing into safe, golden pathways. A hidden compartment pops open, revealing a pristine Health Potion!",
-    visualType: "arcane",
-    loot: { id: "potion_2", name: "Gleaming Healing Potion", desc: "Consumable. Restores 20 HP.", type: "potion", value: 20 },
-    choices: [
-      { text: "Pocket the potion and descend the stairs.", nextNode: "descent_darkness" }
-    ]
-  },
-  lock_fail: {
-    title: "Arcane Backlash",
-    text: "A sharp hum sounds in your ears, followed by a shocking blue bolt of lightning that shoots out from the wall. The magic shocks your core, draining your physical energy as the chamber walls begin to buckle.",
-    visualType: "arcane",
-    damage: 8,
-    choices: [
-      { text: "Flee down the stairs to escape the collapsing chamber.", nextNode: "encounter_hound" }
-    ]
-  },
-  descent_darkness: {
-    title: "The Sunken Vault",
-    text: "You descend deep into the tomb. The walls are carved with intricate murals of fallen elven lords and towering dragons. Suddenly, the shadows in the corner of the vault begin to coagulate. A beast made of pure darkness and purple embers—the legendary Shadow-Hound—leaps in front of you!",
-    visualType: "battle",
-    choices: [
-      { text: "Draw your weapon and engage the beast in active combat!", combatStart: true, nextNode: "battle_active" },
-      { text: "[CHARISMA CHECK] Channel your inner authority and shout a command of banishment to intimidate the beast!", check: { stat: "charisma", difficulty: 14, successNode: "intimidate_success", failNode: "encounter_hound_fight" } },
-      { text: "[WISDOM CHECK] Read the hound's feral movements and use your empathy to pacify it.", check: { stat: "wisdom", difficulty: 14, successNode: "pacify_success", failNode: "encounter_hound_fight" } }
-    ]
-  },
-  encounter_hound: {
-    title: "Ambushed from the Void",
-    text: "As you catch your breath, a menacing growl echoes from the shadows. Glowing purple eyes lock onto your location. It's a ravenous Shadow-Hound, spawned from the broken rift. It charges you immediately with bared fangs!",
-    visualType: "battle",
-    choices: [
-      { text: "Brace for combat and counter-attack!", combatStart: true, nextNode: "battle_active" },
-      { text: "[CHARISMA CHECK] Channel your inner authority and shout a command of banishment to intimidate the beast!", check: { stat: "charisma", difficulty: 14, successNode: "intimidate_success", failNode: "encounter_hound_fight" } },
-      { text: "[WISDOM CHECK] Read the hound's feral movements and use your empathy to pacify it.", check: { stat: "wisdom", difficulty: 14, successNode: "pacify_success", failNode: "encounter_hound_fight" } }
-    ]
-  },
-  intimidate_success: {
-    title: "The Beast Cowed",
-    text: "Your voice booms with supernatural authority, echoing off the ancient stone. The Shadow-Hound halts, its purple eyes widening in sudden fear. It whimpers and dissolves back into the shadows, leaving behind a glowing sapphire amulet!",
-    visualType: "arcane",
-    loot: { id: "amulet_1", name: "Sapphire Command Amulet", desc: "Adds +2 to Charisma Checks when equipped.", type: "weapon", statBonus: { charisma: 2 }, equipped: true },
-    choices: [
-      { text: "Claim the amulet and enter the under-empire (Complete Prologue).", nextNode: "epilogue" }
-    ]
-  },
-  pacify_success: {
-    title: "Shadow Bonded",
-    text: "You stand perfectly still, projecting calm and empathy. The hound's glowing eyes soften. It approaches slowly, sniffing your hand, before dissolving into a warm mist that wraps around your wrist, leaving behind a Ring of Empathy.",
-    visualType: "arcane",
-    loot: { id: "ring_1", name: "Ring of Empathy", desc: "Adds +2 to Wisdom Checks when equipped.", type: "weapon", statBonus: { wisdom: 2 }, equipped: true },
-    choices: [
-      { text: "Wear the ring and enter the under-empire (Complete Prologue).", nextNode: "epilogue" }
-    ]
-  },
-  encounter_hound_fight: {
-    title: "Feral Fury",
-    text: "The Shadow-Hound snarls, completely unfazed by your attempt. It lunges at you with renewed ferocity, grazing your shoulder!",
-    visualType: "battle",
-    damage: 4,
-    choices: [
-      { text: "Draw your weapon and engage the beast in active combat!", combatStart: true, nextNode: "battle_active" }
-    ]
-  },
-  victory_node: {
-    title: "The Beast Dissolved",
-    text: "With a final striking blow, the Shadow-Hound dissipates into a cloud of harmless dark ash. Among the soot, you discover a glowing, runed amulet—the Seal of the High Pass. The master door of the under-empire grinds open, revealing rivers of glowing liquid silver below.",
-    visualType: "arcane",
-    choices: [
-      { text: "Claim the amulet and enter the under-empire (Complete Prologue).", nextNode: "epilogue" }
-    ]
-  },
-  epilogue: {
-    title: "PROLOGUE COMPLETE",
-    text: "You step out onto a towering stone balcony overlooking an underground metropolis that has slept for three millennia. Runic light posts flicker to life across the silent plazas. Your epic quest to unite the broken kingdoms and control the ancient magic has officially begun.",
-    visualType: "arcane",
-    choices: []
-  }
-};
+// STORY_NODES imported from ./data/storyNodes.js
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
@@ -533,7 +393,8 @@ const getClassKeyStat = (className) => {
 };
 
 export default function App() {
-  const [gameState, setGameState] = useState('character-select'); 
+  const [gameState, setGameState] = useState('character-select');
+  const [postCombatNode, setPostCombatNode] = useState('act1_hound_victory'); // node to advance to after combat victory
   const [selectedClass, setSelectedClass] = useState('warrior');
   const [campaignMode, setCampaignMode] = useState('static'); // 'static' or 'ai'
   const [charStats, setCharStats] = useState(CLASSES.warrior.stats);
@@ -1006,8 +867,12 @@ You MUST respond strictly with a valid JSON object matching this schema structur
       setGameState('combat');
       setCombatPhase('initiative-setup');
       setCombatLog([]);
-      // Choose enemy group based on context
-      const groupKey = campaignMode === 'ai' ? 'shadow_hound_pack' : 'shadow_hound_pack';
+      // Use enemyGroup from choice, fallback to shadow_hound_pack
+      const groupKey = choice.enemyGroup || (campaignMode === 'ai' ? 'shadow_hound_pack' : 'shadow_hound_pack');
+      // Store post-combat destination node
+      if (choice.nextNode) {
+        setPostCombatNode(choice.nextNode);
+      }
       const { order } = initializePartyCombat(groupKey);
       // After a short delay, begin the first turn
       setTimeout(() => {
@@ -1304,7 +1169,9 @@ You MUST respond strictly with a valid JSON object matching this schema structur
         fetchNextAiNode(`Victory! The party defeated all enemies. Surviving companions: ${aliveCompanions.join(', ')}. Survey surroundings and check for loot.`);
       } else {
         setGameState('active');
-        advanceStory('victory_node');
+        // Route to the postCombatNode (set when combat started) or fallback
+        const victoryNodeKey = postCombatNode || 'act1_hound_victory';
+        advanceStory(victoryNodeKey);
       }
     }, 1000);
   };
@@ -1338,7 +1205,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
 
   const advanceStory = (nodeKey) => {
     const node = STORY_NODES[nodeKey];
-    if (!node) return;
+    if (!node) { console.warn(`Story node not found: ${nodeKey}`); return; }
     
     triggerShake();
     
@@ -1347,18 +1214,26 @@ You MUST respond strictly with a valid JSON object matching this schema structur
       playSoundEffect('fail');
     }
 
+    // Healing nodes (camp / rest)
+    if (node.heal) {
+      setHp(prev => Math.min(maxHp, prev + node.heal));
+      playSoundEffect('success');
+    }
+
     if (node.loot) {
       setInventory(prev => {
         if (prev.some(item => item.id === node.loot.id)) return prev;
         return [...prev, node.loot];
       });
-      playSoundEffect('success');
+      if (!node.damage) playSoundEffect('success');
     }
 
     setCurrentNodeKey(nodeKey);
-    setJournal(prev => [...prev, { title: node.title, text: node.text }]);
+    setJournal(prev => [...prev, { title: node.title, text: node.text, act: node.act, actLabel: node.actLabel }]);
     
-    if (nodeKey === 'epilogue') {
+    // Endings trigger epilogue screen
+    const endingNodes = ['ending_scholar', 'ending_guardian', 'ending_sacrifice'];
+    if (endingNodes.includes(nodeKey)) {
       setGameState('epilogue');
     } else {
       setGameState('active');
@@ -2485,18 +2360,29 @@ You MUST respond strictly with a valid JSON object matching this schema structur
 
                     {journal.map((item, idx) => {
                       const isLast = idx === journal.length - 1;
+                      // Show an Act banner when actLabel appears for the first time
+                      const prevActLabel = idx > 0 ? journal[idx - 1].actLabel : null;
+                      const showActBanner = item.actLabel && item.actLabel !== prevActLabel;
                       return (
-                        <div 
-                          key={idx} 
-                          className={`space-y-3 transition-opacity duration-500 ${isLast ? 'animate-ink-bleed' : 'opacity-40 hover:opacity-75 transition-opacity'}`}
-                        >
-                          <h3 className="text-xs font-sans text-amber-500 tracking-widest uppercase font-bold flex items-center gap-2">
-                            <Flame className="w-3.5 h-3.5" />
-                            {item.title}
-                          </h3>
-                          <p className="text-stone-100 text-base md:text-lg leading-relaxed font-serif tracking-wide first-letter:text-3xl first-letter:font-bold first-letter:text-amber-500 first-letter:mr-1">
-                            {item.text}
-                          </p>
+                        <div key={idx}>
+                          {showActBanner && (
+                            <div className="flex items-center gap-3 py-3 my-2">
+                              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-900/40 to-transparent" />
+                              <span className="text-[9px] font-sans font-black tracking-[0.25em] uppercase text-amber-600/80 shrink-0">
+                                {item.actLabel}
+                              </span>
+                              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-900/40 to-transparent" />
+                            </div>
+                          )}
+                          <div className={`space-y-3 transition-opacity duration-500 ${isLast ? 'animate-ink-bleed' : 'opacity-40 hover:opacity-75 transition-opacity'}`}>
+                            <h3 className="text-xs font-sans text-amber-500 tracking-widest uppercase font-bold flex items-center gap-2">
+                              <Flame className="w-3.5 h-3.5" />
+                              {item.title}
+                            </h3>
+                            <p className="text-stone-100 text-base md:text-lg leading-relaxed font-serif tracking-wide first-letter:text-3xl first-letter:font-bold first-letter:text-amber-500 first-letter:mr-1">
+                              {item.text}
+                            </p>
+                          </div>
                         </div>
                       );
                     })}
@@ -2641,18 +2527,29 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                   {/* Game Epilogue Panel */}
                   {gameState === 'epilogue' && (
                     <div className="p-6 bg-stone-950/80 border border-amber-900/30 rounded-lg flex flex-col items-center justify-center text-center space-y-4 animate-ink-bleed">
-                      <Award className="w-10 h-10 text-amber-500 animate-bounce" />
+                      <div className="relative">
+                        <Award className="w-12 h-12 text-amber-500" />
+                        <div className="absolute inset-0 w-12 h-12 bg-amber-500/20 rounded-full animate-ping" />
+                      </div>
                       <div>
-                        <h4 className="text-xl font-bold text-stone-100">Chronicle Concluded!</h4>
-                        <p className="text-xs text-stone-400 mt-1 max-w-md mx-auto leading-relaxed">
-                          You have completed the intro prologue module of Eldritch Ascent.
+                        <p className="text-[10px] font-sans font-black tracking-[0.3em] uppercase text-amber-600/80 mb-1">Eldritch Ascent</p>
+                        <h4 className="text-xl font-bold text-stone-100">Chronicle Complete!</h4>
+                        <p className="text-xs text-stone-400 mt-2 max-w-md mx-auto leading-relaxed font-serif">
+                          {currentNodeKey === 'ending_scholar' && 'The Eye of the Void is delivered to the scholars of Silverymoon. The vigil continues.'}
+                          {currentNodeKey === 'ending_guardian' && 'You have chosen the Warden\'s path. The under-empire will not be left unguarded again.'}
+                          {currentNodeKey === 'ending_sacrifice' && 'The Dreaming One dreams no more. The cost was absolute. The victory was complete.'}
+                          {!['ending_scholar','ending_guardian','ending_sacrifice'].includes(currentNodeKey) && 'Your legend has been written in the stones of the High Pass.'}
                         </p>
+                      </div>
+                      <div className="flex flex-col items-center gap-2 text-[10px] text-stone-600 font-sans">
+                        <span>Acts completed: {Math.max(...journal.map(j => j.act || 1))} of 5</span>
+                        <span>Scenes witnessed: {journal.length}</span>
                       </div>
                       <button 
                         onClick={resetGame}
                         className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-stone-950 font-sans font-bold uppercase tracking-wider rounded transition-all text-xs cursor-pointer"
                       >
-                        Start New Adventure
+                        Begin a New Chronicle
                       </button>
                     </div>
                   )}
