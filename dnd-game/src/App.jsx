@@ -2727,7 +2727,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
       {gameState === 'prologue' && (
         <PrologueScreen
           character={{
-            name: selectedClass === 'warrior' ? 'Vanguard' : selectedClass === 'mage' ? 'Aether Weaver' : 'Shadowstalker',
+            name: CLASSES[selectedClass].name,
             class: CLASSES[selectedClass].name,
             weapons: CLASSES[selectedClass].inventory.filter(i => i.type === 'weapon')
           }}
