@@ -2342,9 +2342,9 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                         <p className="font-serif text-stone-400 italic animate-pulse text-sm">
                           {combatPhase === 'player-roll' && "Rolling attack dice..."}
                           {combatPhase === 'player-resolve' && "Resolving attack effect..."}
-                          {combatPhase === 'enemy-wait' && `${enemyStats.name} prepares to strike...`}
-                          {combatPhase === 'enemy-roll' && `${enemyStats.name} rolls attack dice...`}
-                          {combatPhase === 'enemy-resolve' && `Resolving ${enemyStats.name} attack...`}
+                          {combatPhase === 'enemy-wait' && `${initiativeOrder[activeInitiativeIndex]?.name || 'Enemy'} prepares to strike...`}
+                          {combatPhase === 'enemy-roll' && `${initiativeOrder[activeInitiativeIndex]?.name || 'Enemy'} rolls attack dice...`}
+                          {combatPhase === 'enemy-resolve' && `Resolving ${initiativeOrder[activeInitiativeIndex]?.name || 'Enemy'} attack...`}
                         </p>
                       </div>
                     )}
@@ -2647,7 +2647,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                   {gameState === 'combat' && combatRollDetails && (
                     <div className="mt-3 text-center max-w-[240px] animate-ink-bleed">
                       <p className="text-[10px] text-purple-400 font-sans font-bold uppercase tracking-wider">
-                        {combatPhase === 'initiative-roll' ? 'Initiative Roll' : combatPhase.startsWith('enemy') ? `${enemyStats.name}'s Action` : 'Your Action'}
+                        {combatPhase === 'initiative-roll' ? 'Initiative Roll' : combatPhase.startsWith('enemy') ? `${initiativeOrder[activeInitiativeIndex]?.name || 'Enemy'}'s Action` : 'Your Action'}
                       </p>
                       <p className="text-[11px] font-sans text-stone-400 leading-relaxed mt-1">
                         {combatRollDetails}
