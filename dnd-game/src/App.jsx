@@ -913,6 +913,33 @@ You MUST respond strictly with a valid JSON object matching this schema structur
     const current = safeOrder[nextIndex];
     if (!current) return;
 
+    if (current.statusEffects?.includes('poisoned')) {
+      const poisonDmg = 3;
+      const newHp = Math.max(0, current.hp - poisonDmg);
+      
+      if (current.faction === 'party') {
+        const updatedParty = partyRef.current.map(m => m.id === current.id ? { ...m, hp: newHp } : m);
+        setParty(updatedParty);
+        if (current.isPlayer) setHp(newHp);
+      } else {
+        const updatedEnemies = enemiesRef.current.map(e => e.id === current.id ? { ...e, hp: newHp } : e);
+        setEnemies(updatedEnemies);
+      }
+      
+      current.hp = newHp;
+      setCombatLog(prev => [`☠️ Poison DoT: ${current.name} takes ${poisonDmg} poison damage.`, ...prev]);
+      spawnDamagePopup(poisonDmg.toString(), current.faction === 'party' ? 'player' : 'enemy', 'damage');
+      playSoundEffect('fail');
+
+      if (newHp <= 0) {
+        setCombatLog(prev => [`💀 ${current.name} has succumbed to poison!`, ...prev]);
+        setTimeout(() => {
+          advanceInitiative(nextIndex, safeOrder);
+        }, 1200);
+        return;
+      }
+    }
+
     if (current.faction === 'party') {
       if (current.isPlayer) {
         setCombatPhase('select-action');
