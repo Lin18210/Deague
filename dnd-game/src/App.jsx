@@ -424,23 +424,15 @@ export default function App() {
   const [shakeScreen, setShakeScreen] = useState(false);
 
   // Combat systems
-  const [enemyHp, setEnemyHp] = useState(40);
-  const [maxEnemyHp, setMaxEnemyHp] = useState(40);
   const [combatLog, setCombatLog] = useState([]);
   const [damagePopups, setDamagePopups] = useState([]); 
-  const [activeCombatEffect, setActiveCombatEffect] = useState('');
   // Active combat buffs: { battleCry, rage, huntersMarkActive, bardDebuff, stunned }
   const [combatBuffs, setCombatBuffs] = useState({ battleCry: false, rage: false, huntersMarkActive: false, bardDebuff: false, enemyStunned: false });
   
   // Refactored immersive combat states
   const [combatPhase, setCombatPhase] = useState('select-action'); // 'initiative-roll' | 'select-action' | 'player-roll' | 'player-resolve' | 'enemy-wait' | 'enemy-roll' | 'enemy-resolve'
-  const [combatDiceType, setCombatDiceType] = useState('attack'); // 'attack' | 'damage' | 'dodge' | 'initiative'
   const [combatRollDetails, setCombatRollDetails] = useState(''); // E.g. "Attack roll: 1d20 + STR (+3)"
-  const [combatRollDC, setCombatRollDC] = useState(0); // target AC or check DC
   const [activeFlashEffect, setActiveFlashEffect] = useState(''); // 'red' | 'green' | 'purple' | ''
-  const [isPlayerAttacking, setIsPlayerAttacking] = useState(false);
-  const [isEnemyAttacking, setIsEnemyAttacking] = useState(false);
-  const [enemyStats, setEnemyStats] = useState({ name: 'Shadow-Hound', ac: 14, attackMod: 4, damage: '1d6+3', dexMod: 2 });
 
   // ── Party Combat System (BG3-style) ────────────────────────────────────────
   const [party, setParty] = useState([]);           // All 4 party members (player + companions)
@@ -1614,198 +1606,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
     }, 900);
   };
 
-  const rollCombatInitiative = () => {
-    if (diceRolling) return;
-    
-    setDiceRolling(true);
-    setCombatPhase('initiative-roll');
-    setCombatDiceType('initiative');
-    setCombatRollDetails(`Initiative Roll: 1d20 + DEX Mod`);
-    
-    let counter = 0;
-    const interval = setInterval(() => {
-      playSoundEffect('dice');
-      setRolledValue(Math.floor(Math.random() * 20) + 1);
-      counter++;
-      
-      if (counter > 10) {
-        clearInterval(interval);
-        
-        const playerRoll = Math.floor(Math.random() * 20) + 1;
-        setRolledValue(playerRoll);
-        
-        let dexBonus = 0;
-        inventory.forEach(item => {
-          if (item.equipped && item.statBonus && item.statBonus.dexterity) {
-            dexBonus += item.statBonus.dexterity;
-          }
-        });
-        const dexMod = Math.floor(((charStats.dexterity + dexBonus) - 10) / 2);
-        const playerTotal = playerRoll + dexMod;
-        
-        const enemyRoll = Math.floor(Math.random() * 20) + 1;
-        const enemyTotal = enemyRoll + enemyStats.dexMod;
-        
-        const playerWon = playerTotal >= enemyTotal;
-        
-        setDiceRolling(false);
-        playSoundEffect(playerWon ? 'success' : 'fail');
-        
-        const logMsg = `🎲 Initiative: You rolled ${playerRoll} + (${dexMod >= 0 ? '+' : ''}${dexMod}) = ${playerTotal} | ${enemyStats.name} rolled ${enemyRoll} + (${enemyStats.dexMod}) = ${enemyTotal}.`;
-        const outcomeMsg = playerWon ? `⚔️ You reacted faster! Your turn begins.` : `👹 ${enemyStats.name} surged forward first!`;
-        
-        setCombatLog(prev => [outcomeMsg, logMsg, ...prev]);
-        setRollSuccess(playerWon);
-        setCombatRollDetails(`Initiative result: You (${playerTotal}) vs ${enemyStats.name} (${enemyTotal}). ${playerWon ? 'You go first!' : 'Enemy goes first!'}`);
-        
-        setTimeout(() => {
-          if (playerWon) {
-            setCombatPhase('select-action');
-            setCombatRollDetails('Your turn! Select a combat command.');
-          } else {
-            setCombatPhase('enemy-wait');
-            triggerEnemyRetaliation();
-          }
-        }, 2200);
-      }
-    }, 75);
-  };
 
-  const triggerEnemyRetaliation = (wasDodging = false, dodgeDexMod = 0) => {
-    if (enemyHp <= 0 || hp <= 0) return;
-    
-    setCombatPhase('enemy-wait');
-    setCombatRollDetails(`${enemyStats.name} is preparing to strike...`);
-    
-    if (combatBuffs.enemyStunned) {
-      setCombatBuffs(prev => ({ ...prev, enemyStunned: false }));
-      setTimeout(() => {
-        setCombatLog(prev => [`🌀 The stunned ${enemyStats.name} shakes its head, losing its action!`, ...prev]);
-        setCombatPhase('select-action');
-        setCombatRollDetails('Your turn! Select a combat command.');
-      }, 1500);
-      return;
-    }
-    
-    setTimeout(() => {
-      if (hp <= 0) return;
-      
-      setCombatPhase('enemy-roll');
-      setCombatDiceType('attack');
-      setCombatRollDetails(`${enemyStats.name} Attack: 1d20 + Attack Mod (+${enemyStats.attackMod})`);
-      
-      let counter = 0;
-      const interval = setInterval(() => {
-        playSoundEffect('dice');
-        setRolledValue(Math.floor(Math.random() * 20) + 1);
-        counter++;
-        
-        if (counter > 10) {
-          clearInterval(interval);
-          
-          const finalRoll = Math.floor(Math.random() * 20) + 1;
-          setRolledValue(finalRoll);
-          
-          const totalAttack = finalRoll + enemyStats.attackMod;
-          
-          const baseAC = getClassAC(selectedClass);
-          let extraAC = 0;
-          inventory.forEach(item => {
-            if (item.equipped && item.name.toLowerCase().includes('shield')) {
-              extraAC += 2;
-            }
-          });
-          const playerAC = baseAC + extraAC;
-          
-          let hit = totalAttack >= playerAC;
-          if (finalRoll === 20) hit = true;
-          if (finalRoll === 1) hit = false;
-          
-          setCombatPhase('enemy-resolve');
-          
-          if (wasDodging) {
-            hit = false; 
-          }
-          
-          setIsEnemyAttacking(true);
-          setTimeout(() => setIsEnemyAttacking(false), 350);
-          
-          if (hit) {
-            let dmg = rollDice(enemyStats.damage).total;
-            
-            if (combatBuffs.bardDebuff) {
-              dmg = Math.max(1, dmg - 3);
-              setCombatBuffs(prev => ({ ...prev, bardDebuff: false }));
-            }
-            if (combatBuffs.rage) {
-              dmg = Math.ceil(dmg / 2);
-            }
-            
-            playSoundEffect('fail');
-            setActiveFlashEffect('red');
-            setTimeout(() => setActiveFlashEffect(''), 550);
-            triggerShake();
-            
-            const isCrit = finalRoll === 20;
-            if (isCrit) {
-              dmg = dmg * 2;
-            }
-            
-            const newHp = Math.max(0, hp - dmg);
-            setHp(newHp);
-            spawnDamagePopup(dmg.toString(), 'player', isCrit ? 'crit' : 'damage');
-            
-            const hitMsg = isCrit 
-              ? `💀 CRITICAL HIT! ${enemyStats.name} rolled a natural 20 and slashed you for ${dmg} dark damage!`
-              : `💥 ${enemyStats.name} rolled ${finalRoll} + ${enemyStats.attackMod} = ${totalAttack} vs AC ${playerAC} — HIT! You take ${dmg} damage.`;
-            setCombatLog(prev => [hitMsg, ...prev]);
-            setCombatRollDetails(`Enemy Hit: rolled ${totalAttack} vs AC ${playerAC}. Deals ${dmg} damage.`);
-            
-            if (newHp <= 0) {
-              setTimeout(() => {
-                setCombatBuffs({ battleCry: false, rage: false, huntersMarkActive: false, bardDebuff: false, enemyStunned: false });
-                setGameState('active');
-                if (campaignMode === 'ai') {
-                  fetchNextAiNode(`You were defeated in battle by the ${enemyStats.name}... Describe your narrow escape or collapse.`);
-                } else {
-                  advanceStory('vault_fail');
-                }
-              }, 1800);
-              return;
-            }
-          } else {
-            playSoundEffect('success');
-            const missMsg = finalRoll === 1
-              ? `😅 ${enemyStats.name} rolled a 1 — CRITICAL MISS! Its claws swiped empty air.`
-              : `💨 ${enemyStats.name} rolled ${finalRoll} + ${enemyStats.attackMod} = ${totalAttack} vs AC ${playerAC} — MISS!`;
-            setCombatLog(prev => [missMsg, ...prev]);
-            spawnDamagePopup(wasDodging ? 'DODGED!' : 'MISS!', 'player', wasDodging ? 'dodge' : 'miss');
-            setCombatRollDetails(`Enemy Miss: rolled ${totalAttack} vs AC ${playerAC}.`);
-          }
-          
-          setTimeout(() => {
-            setCombatPhase('select-action');
-            setCombatRollDetails('Your turn! Select a combat command.');
-          }, 1800);
-        }
-      }, 75);
-      
-    }, 1200);
-  };
-
-  const resolveCombatVictory = () => {
-    setTimeout(() => {
-      playSoundEffect('success');
-      setCombatBuffs({ battleCry: false, rage: false, huntersMarkActive: false, bardDebuff: false, enemyStunned: false });
-      if (campaignMode === 'ai') {
-        setGameState('active');
-        fetchNextAiNode(`The ${enemyStats.name} dissolves into soot! Survey your surroundings and check for loot.`);
-      } else {
-        setGameState('active');
-        advanceStory('victory_node');
-      }
-    }, 1200);
-  };
 
   const executeCombatAction = (action) => {
     if (hp <= 0 || diceRolling || companionActing) return;
