@@ -1001,75 +1001,255 @@ You MUST respond strictly with a valid JSON object matching this schema structur
     let logMsg = '';
     let updatedEnemies = [...currentEnemies];
     let updatedParty = [...currentParty];
-
-    // Support behavior: heal if any ally critically wounded
-    if (companion.aiBehavior === 'support') {
-      const woundedAlly = currentParty.find(m => m.hp > 0 && m.hp / m.maxHp < 0.35 && m.id !== companion.id);
-      const healAbility = companion.abilities.find(a => a.type === 'heal');
-
-      if (woundedAlly && healAbility && companion.mana >= healAbility.manaCost) {
-        const healAmt = rollDiceNotation(healAbility.healAmount);
-        const newHp = Math.min(woundedAlly.maxHp, woundedAlly.hp + healAmt);
-        updatedParty = updatedParty.map(m => m.id === woundedAlly.id ? { ...m, hp: newHp } : m);
-
-        // Also update companion mana
-        updatedParty = updatedParty.map(m => m.id === companion.id
-          ? { ...m, mana: Math.max(0, m.mana - healAbility.manaCost) }
-          : m
-        );
-
-        logMsg = `💚 ${companion.name} casts ${healAbility.name} on ${woundedAlly.name}, restoring ${healAmt} HP! (${woundedAlly.hp} → ${newHp})`;
-        setActiveFlashEffect('green');
-        setTimeout(() => setActiveFlashEffect(''), 500);
-        playSoundEffect('success');
-        spawnDamagePopup(`+${healAmt}`, 'player', 'heal');
-        setParty(updatedParty);
-        setCombatLog(prev => [logMsg, ...prev]);
-
-        setTimeout(() => advanceInitiative(idx, currentOrder), 1600);
-        return;
-      }
-    }
+    let didAction = false;
 
     // Attack: target lowest HP enemy
     const target = aliveEnemies.reduce((lowest, e) => e.hp < lowest.hp ? e : lowest, aliveEnemies[0]);
 
-    // Roll attack
-    const attackRoll = Math.floor(Math.random() * 20) + 1;
-    const totalAttack = attackRoll + companion.attackMod;
-    const isCrit = attackRoll === 20;
-    const isMiss = attackRoll === 1;
-    const hit = isCrit || (!isMiss && totalAttack >= target.ac);
+    // 1. Lyra (Support behavior)
+    if (companion.id === 'lyra') {
+      const woundedAlly = currentParty.find(m => m.hp > 0 && m.hp / m.maxHp < 0.50 && m.id !== companion.id);
+      const healAbility = companion.abilities.find(a => a.type === 'heal');
+      const sacredFlame = companion.abilities.find(a => a.id === 'sacred_flame');
 
-    if (hit) {
-      let dmg = rollDiceNotation(companion.attackDamage);
-      if (isCrit) dmg *= 2;
-      const newHp = Math.max(0, target.hp - dmg);
-      updatedEnemies = currentEnemies.map(e => e.id === target.id ? { ...e, hp: newHp } : e);
+      if (woundedAlly && healAbility && companion.mana >= healAbility.manaCost) {
+        // Cast Healing Word
+        const healAmt = rollDiceNotation(healAbility.healAmount);
+        const newHp = Math.min(woundedAlly.maxHp, woundedAlly.hp + healAmt);
+        
+        updatedParty = updatedParty.map(m => {
+          if (m.id === woundedAlly.id) return { ...m, hp: newHp };
+          if (m.id === companion.id) return { ...m, mana: Math.max(0, m.mana - healAbility.manaCost) };
+          return m;
+        });
+        
+        if (woundedAlly.isPlayer) setHp(newHp);
 
-      logMsg = isCrit
-        ? `🔥 CRIT! ${companion.name} rolls ${attackRoll} — CRITICAL HIT on ${target.name} for ${dmg} damage!`
-        : `⚔️ ${companion.name} rolls ${attackRoll}+${companion.attackMod}=${totalAttack} vs AC ${target.ac} — HIT! Deals ${dmg} damage to ${target.name}.`;
+        logMsg = `💚 Lyra Dawnveil casts Healing Word on ${woundedAlly.name}, restoring ${healAmt} HP!`;
+        setActiveFlashEffect('green');
+        setTimeout(() => setActiveFlashEffect(''), 500);
+        playSoundEffect('success');
+        spawnDamagePopup(`+${healAmt}`, woundedAlly.isPlayer ? 'player' : 'companion', 'heal');
+        
+        setParty(updatedParty);
+        setCombatLog(prev => [logMsg, ...prev]);
+        didAction = true;
+      } else if (sacredFlame && companion.mana >= sacredFlame.manaCost && Math.random() < 0.5) {
+        // Cast Sacred Flame (auto-hits)
+        const dmg = rollDiceNotation(sacredFlame.damage);
+        const newHp = Math.max(0, target.hp - dmg);
+        
+        updatedParty = updatedParty.map(m => m.id === companion.id ? { ...m, mana: Math.max(0, m.mana - sacredFlame.manaCost) } : m);
+        updatedEnemies = currentEnemies.map(e => e.id === target.id ? { ...e, hp: newHp } : e);
+        
+        logMsg = `🔥 Lyra Dawnveil casts Sacred Flame! Radiant fire descends on ${target.name} for ${dmg} holy damage!`;
+        setActiveFlashEffect('purple');
+        setTimeout(() => setActiveFlashEffect(''), 500);
+        playSoundEffect('magic');
+        spawnDamagePopup(dmg.toString(), 'enemy', 'damage');
+        
+        setParty(updatedParty);
+        setEnemies(updatedEnemies);
+        setCombatLog(prev => [logMsg, ...prev]);
+        didAction = true;
 
-      playSoundEffect('hit');
-      setActiveCombatEffect('shake-monster');
-      setTimeout(() => setActiveCombatEffect(''), 400);
-      spawnDamagePopup(dmg.toString(), 'enemy', isCrit ? 'crit' : 'damage');
-
-      setEnemies(updatedEnemies);
-      setCombatLog(prev => [logMsg, ...prev]);
-
-      // Check if all enemies dead for victory
-      if (updatedEnemies.every(e => e.hp <= 0)) {
-        setTimeout(() => resolvePartyVictory(), 1000);
-        return;
+        if (updatedEnemies.every(e => e.hp <= 0)) {
+          setTimeout(() => resolvePartyVictory(), 1000);
+          return;
+        }
       }
-    } else {
-      logMsg = isMiss
-        ? `❌ ${companion.name} rolled a natural 1 — CRITICAL MISS! Their strike goes wide.`
-        : `💨 ${companion.name} rolled ${attackRoll}+${companion.attackMod}=${totalAttack} vs AC ${target.ac} — MISS!`;
-      playSoundEffect('fail');
-      setCombatLog(prev => [logMsg, ...prev]);
+    }
+
+    // 2. Kael (Arcane Trickster / Rogue)
+    if (companion.id === 'kael' && !didAction) {
+      const sneakAttack = companion.abilities.find(a => a.id === 'sneak_attack');
+      const poisonBlade = companion.abilities.find(a => a.id === 'poison_blade');
+      
+      const useSneak = sneakAttack && companion.mana >= sneakAttack.manaCost && Math.random() < 0.4;
+      const usePoison = poisonBlade && !target.statusEffects?.includes('poisoned') && Math.random() < 0.5;
+
+      if (useSneak) {
+        // Sneak Attack: attack roll with extra damage
+        const attackRoll = Math.floor(Math.random() * 20) + 1;
+        const totalAttack = attackRoll + companion.attackMod;
+        const isCrit = attackRoll === 20;
+        const isMiss = attackRoll === 1;
+        const hit = isCrit || (!isMiss && totalAttack >= target.ac);
+
+        updatedParty = updatedParty.map(m => m.id === companion.id ? { ...m, mana: Math.max(0, m.mana - sneakAttack.manaCost) } : m);
+
+        if (hit) {
+          let dmg = rollDiceNotation(sneakAttack.damage);
+          if (isCrit) dmg *= 2;
+          const newHp = Math.max(0, target.hp - dmg);
+          updatedEnemies = currentEnemies.map(e => e.id === target.id ? { ...e, hp: newHp } : e);
+          
+          logMsg = isCrit
+            ? `🗡️ CRIT! Kael Thornblade strikes from the shadows — SNEAK ATTACK on ${target.name} for ${dmg} damage!`
+            : `🗡️ Kael Thornblade strikes from shadows — SNEAK ATTACK on ${target.name} for ${dmg} damage! (${totalAttack} vs AC ${target.ac})`;
+          
+          playSoundEffect('hit');
+          setActiveCombatEffect('shake-monster');
+          setTimeout(() => setActiveCombatEffect(''), 400);
+          spawnDamagePopup(dmg.toString(), 'enemy', isCrit ? 'crit' : 'damage');
+          
+          setEnemies(updatedEnemies);
+        } else {
+          logMsg = `💨 Kael Thornblade attempts a Sneak Attack on ${target.name} but MISSES!`;
+          playSoundEffect('fail');
+        }
+
+        setParty(updatedParty);
+        setCombatLog(prev => [logMsg, ...prev]);
+        didAction = true;
+
+        if (hit && updatedEnemies.every(e => e.hp <= 0)) {
+          setTimeout(() => resolvePartyVictory(), 1000);
+          return;
+        }
+      } else if (usePoison) {
+        // Poison Blade
+        const attackRoll = Math.floor(Math.random() * 20) + 1;
+        const totalAttack = attackRoll + companion.attackMod;
+        const isCrit = attackRoll === 20;
+        const isMiss = attackRoll === 1;
+        const hit = isCrit || (!isMiss && totalAttack >= target.ac);
+
+        if (hit) {
+          let dmg = rollDiceNotation(poisonBlade.damage);
+          if (isCrit) dmg *= 2;
+          const newHp = Math.max(0, target.hp - dmg);
+          
+          updatedEnemies = currentEnemies.map(e => {
+            if (e.id === target.id) {
+              const currentFX = e.statusEffects || [];
+              const nextFX = currentFX.includes('poisoned') ? currentFX : [...currentFX, 'poisoned'];
+              return { ...e, hp: newHp, statusEffects: nextFX };
+            }
+            return e;
+          });
+
+          logMsg = `☠️ Kael Thornblade uses Poison Blade on ${target.name}! Deals ${dmg} damage and inflicts POISONED!`;
+          playSoundEffect('hit');
+          setActiveCombatEffect('shake-monster');
+          setTimeout(() => setActiveCombatEffect(''), 400);
+          spawnDamagePopup(dmg.toString(), 'enemy', isCrit ? 'crit' : 'damage');
+          
+          setEnemies(updatedEnemies);
+        } else {
+          logMsg = `💨 Kael Thornblade attempts to poison ${target.name} but misses.`;
+          playSoundEffect('fail');
+        }
+
+        setCombatLog(prev => [logMsg, ...prev]);
+        didAction = true;
+
+        if (hit && updatedEnemies.every(e => e.hp <= 0)) {
+          setTimeout(() => resolvePartyVictory(), 1000);
+          return;
+        }
+      }
+    }
+
+    // 3. Vorn (Barbarian)
+    if (companion.id === 'vorn' && !didAction) {
+      const isRaging = companion.statusEffects?.includes('raging');
+      const rageStrike = companion.abilities.find(a => a.id === 'rage_strike');
+
+      if (!isRaging && Math.random() < 0.50) {
+        // Enter Rage!
+        updatedParty = updatedParty.map(m => {
+          if (m.id === companion.id) {
+            const currentFX = m.statusEffects || [];
+            return { ...m, statusEffects: [...currentFX, 'raging'] };
+          }
+          return m;
+        });
+
+        logMsg = `🔥 Vorn Ashmantle enters a BERSERKER RAGE! Halves incoming damage and powers up attacks!`;
+        setActiveFlashEffect('red');
+        setTimeout(() => setActiveFlashEffect(''), 500);
+        playSoundEffect('success');
+        
+        setParty(updatedParty);
+        setCombatLog(prev => [logMsg, ...prev]);
+        didAction = true;
+      } else if (isRaging && rageStrike && Math.random() < 0.5) {
+        // Rage Strike
+        const attackRoll = Math.floor(Math.random() * 20) + 1;
+        const totalAttack = attackRoll + companion.attackMod;
+        const isCrit = attackRoll === 20;
+        const isMiss = attackRoll === 1;
+        const hit = isCrit || (!isMiss && totalAttack >= target.ac);
+
+        if (hit) {
+          let dmg = rollDiceNotation(rageStrike.damage);
+          if (isCrit) dmg *= 2;
+          const newHp = Math.max(0, target.hp - dmg);
+          updatedEnemies = currentEnemies.map(e => e.id === target.id ? { ...e, hp: newHp } : e);
+
+          logMsg = isCrit
+            ? `💥 CRIT! Vorn Ashmantle unleashes a furious Rage Strike on ${target.name} for ${dmg} damage!`
+            : `💥 Vorn Ashmantle strikes with absolute fury — RAGE STRIKE on ${target.name} for ${dmg} damage!`;
+          
+          playSoundEffect('hit');
+          setActiveCombatEffect('shake-monster');
+          setTimeout(() => setActiveCombatEffect(''), 400);
+          spawnDamagePopup(dmg.toString(), 'enemy', isCrit ? 'crit' : 'damage');
+
+          setEnemies(updatedEnemies);
+        } else {
+          logMsg = `💨 Vorn Ashmantle swings his greataxe in rage but misses ${target.name}.`;
+          playSoundEffect('fail');
+        }
+
+        setCombatLog(prev => [logMsg, ...prev]);
+        didAction = true;
+
+        if (hit && updatedEnemies.every(e => e.hp <= 0)) {
+          setTimeout(() => resolvePartyVictory(), 1000);
+          return;
+        }
+      }
+    }
+
+    if (!didAction) {
+      // Basic Attack fallback
+      const attackRoll = Math.floor(Math.random() * 20) + 1;
+      const totalAttack = attackRoll + companion.attackMod;
+      const isCrit = attackRoll === 20;
+      const isMiss = attackRoll === 1;
+      const hit = isCrit || (!isMiss && totalAttack >= target.ac);
+
+      if (hit) {
+        let dmg = rollDiceNotation(companion.attackDamage);
+        if (isCrit) dmg *= 2;
+        const newHp = Math.max(0, target.hp - dmg);
+        updatedEnemies = currentEnemies.map(e => e.id === target.id ? { ...e, hp: newHp } : e);
+
+        logMsg = isCrit
+          ? `🔥 CRIT! ${companion.name} rolls 20 — CRITICAL HIT on ${target.name} for ${dmg} damage!`
+          : `⚔️ ${companion.name} rolls ${attackRoll}+${companion.attackMod}=${totalAttack} vs AC ${target.ac} — HIT! Deals ${dmg} damage to ${target.name}.`;
+
+        playSoundEffect('hit');
+        setActiveCombatEffect('shake-monster');
+        setTimeout(() => setActiveCombatEffect(''), 400);
+        spawnDamagePopup(dmg.toString(), 'enemy', isCrit ? 'crit' : 'damage');
+
+        setEnemies(updatedEnemies);
+        setCombatLog(prev => [logMsg, ...prev]);
+
+        if (updatedEnemies.every(e => e.hp <= 0)) {
+          setTimeout(() => resolvePartyVictory(), 1000);
+          return;
+        }
+      } else {
+        logMsg = isMiss
+          ? `❌ ${companion.name} rolled a natural 1 — CRITICAL MISS! Their strike goes wide.`
+          : `💨 ${companion.name} rolled ${attackRoll}+${companion.attackMod}=${totalAttack} vs AC ${target.ac} — MISS!`;
+        playSoundEffect('fail');
+        setCombatLog(prev => [logMsg, ...prev]);
+      }
     }
 
     setTimeout(() => advanceInitiative(idx, currentOrder), 1400);
