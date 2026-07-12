@@ -33,6 +33,11 @@ export const STORY_NODES = {
     actLabel: "ACT I — THE HIGH PASS",
     text: "The campfire crackles weakly against the freezing gales sealing the High Pass. You huddle among the ruins of a Zhentarim trading outpost, its banners long since shredded by the relentless mountain wind. Beneath your boots, a rhythmic thrum shakes the ancient stone — deep in the forgotten chambers below, a three-thousand-year-old magic seal has finally given way. Runes carved into the cave walls bleed crimson light, and the temperature drops ten degrees as a distant, inhuman wail echoes from the dark below.",
     visualType: "hearth",
+    companionDialogue: [
+      { speaker: "Lyra", emoji: "🕊️", text: "Lathander's light... that wail came from deep below. Something old has woken." },
+      { speaker: "Kael", emoji: "🗡️", text: "Those runes are bleeding. I've seen cursed seals before — never one this large." },
+      { speaker: "Vorn", emoji: "🪓", text: "The mountain speaks. My clan called this sound the Void-Breath. We should move." }
+    ],
     choices: [
       { text: "Grip your weapon and approach the bleeding runestones for a closer look.", nextNode: "approach_seal" },
       { text: "Recite the Warding Litany of Ioun to attempt to stabilize the tremors.", nextNode: "stabilize_ward" },
@@ -168,6 +173,11 @@ export const STORY_NODES = {
     act: 1,
     text: "You hold your torch close and study the carvings. Your knowledge of ancient history pieces together the story: In -892 DR, the high mages of Myth Drannor descended to this mountain after tracking a *Dreaming One* — an aboleth-lich of immense power — that had been seeding mental parasites into the populace of the Moonsea region. They fought it here for forty days, and when they could not destroy it, they sealed it in the deepest vault using a Mythal-fragment as the anchor. The final panel shows the lead mage, Coranthil Dawnveil, sacrificing her own lifeforce to complete the seal. The seal has now broken. You understand what is waking below.",
     visualType: "arcane",
+    companionDialogue: [
+      { speaker: "Lyra", emoji: "🕊️", text: "Coranthil Dawnveil... the Cleric histories mention her. She gave everything. We cannot let that sacrifice be undone." },
+      { speaker: "Kael", emoji: "🗡️", text: "An aboleth-lich. Right. And here I thought this would be a quick job. Anyone want to turn back? Just me?" },
+      { speaker: "Vorn", emoji: "🪓", text: "*traces the final carving with one finger* My clan's elder spoke of the Three-Millennium Sleep. This is it." }
+    ],
     loot: { id: "lorebook_1", name: "Warden's Carved History", desc: "Lore Item. Details the sealing of Zal'thrix in -892 DR by Coranthil Dawnveil.", type: "tool", equipped: false },
     choices: [
       { text: "This knowledge is vital. Take the left passage (recent footprints).", nextNode: "act1_left_passage" },
@@ -262,6 +272,11 @@ export const STORY_NODES = {
     text: "You find a defensible corner of the antechamber and make a brief camp — no bedroll, just your back against the wall and a shielded torch. The silence of the deep mountain presses in around you. You eat a strip of salted provisions, tend your wounds with practiced efficiency, and spend a few minutes studying the passages ahead. Your companions circle the area, keeping watch. The rest is brief but restorative. The sounds from below have quieted for now. Whatever stirs in the vault has either retreated or is waiting.",
     visualType: "camp",
     heal: 8,
+    companionDialogue: [
+      { speaker: "Lyra", emoji: "🕊️", text: "*quietly* I've asked Lathander for guidance. The light feels distant down here, but it answers. We are not abandoned." },
+      { speaker: "Kael", emoji: "🗡️", text: "*sharpening a blade* I've broken into six Zhentarim vaults and three noble crypts. Never heard a mountain breathe before. I don't like it." },
+      { speaker: "Vorn", emoji: "🪓", text: "Rest. We fight better rested. The dead can wait another hour — they have waited three thousand years already." }
+    ],
     choices: [
       { text: "Recharged. Move forward to the Vault entrance.", nextNode: "act1_vault_entrance" }
     ]
@@ -455,6 +470,11 @@ export const STORY_NODES = {
     act: 2,
     text: "Malveth raises one gauntleted hand and the skeleton soldiers stand down. *'...You invoke old law. Very well. Speak your purpose, living one.'* In the tense silence that follows, you lay out what you know — the broken seal, the Mythal bleed, the Herald. Malveth is still for a long moment, then removes his helm. Beneath it is the desiccated but recognizable face of an elf lord — the last Embervane captain. His voice, when it comes again, carries grief. *'I know. I have been fighting the Dreaming One's influence on my own binding for three centuries. My soldiers are already mostly gone — claimed by the Void-whispers. I cannot accompany you further, but I can give you what you need.'*",
     visualType: "arcane",
+    companionDialogue: [
+      { speaker: "Lyra", emoji: "🕊️", text: "*steps forward* Malveth... you are still in there. Still fighting. Lathander honors loyalty that persists even in death." },
+      { speaker: "Kael", emoji: "🗡️", text: "*whispers* Did he just... remove his skull-helm and have a normal face under it? I was not prepared for that." },
+      { speaker: "Vorn", emoji: "🪓", text: "Three centuries. *jaw set* He is strong. I respect strong. We will finish what he cannot." }
+    ],
     choices: [
       { text: "Ask Malveth what gift he can offer.", nextNode: "act2_malveth_gift" }
     ]
@@ -649,6 +669,11 @@ export const STORY_NODES = {
     text: "You make a brief camp at the edge of the cavern, far enough from the Rift that its influence is manageable but close enough to maintain situational awareness. The void-light from the Rift casts everything in shifting shades of indigo and silver. Lyra leads a short prayer to Lathander; the warm morning-gold glow of her holy symbol seems defiant against the surrounding dark. Kael keeps watch while Vorn eats in complete silence. When you rise, you feel steadied — physically and mentally — against what awaits.",
     visualType: "camp",
     heal: 10,
+    companionDialogue: [
+      { speaker: "Lyra", emoji: "🕊️", text: "*holds her symbol aloft* The Rift... it whispers. It promises things. I am choosing not to listen. I recommend you do the same." },
+      { speaker: "Kael", emoji: "🗡️", text: "I heard it too. Offered me the location of every locked vault in Faerûn. Tempting. Extremely tempting. No." },
+      { speaker: "Vorn", emoji: "🪓", text: "It showed me my clan. Alive. *long silence* They are not. I know they are not. The void lies." }
+    ],
     choices: [
       { text: "Step through the Rift passage and descend to the Under-Empire.", nextNode: "act3_rift_approach" }
     ]
@@ -860,6 +885,11 @@ export const STORY_NODES = {
     text: "You withdraw slightly from the antechamber entrance and make your final camp in the last defensible position before the Eye Chamber. Lyra uses the last of her healing prayers on the worst of your wounds. Kael checks his blades with silent focus. Vorn closes his eyes and breathes deeply, centering his rage. You eat the last of your provisions in silence, each person understanding that what comes next will determine the fate of every living soul on the surface. When you rise, everyone is ready. Completely, irrevocably ready.",
     visualType: "camp",
     heal: 15,
+    companionDialogue: [
+      { speaker: "Lyra", emoji: "🕊️", text: "Whatever happens in that chamber — I want you to know that following you into this mountain was the right choice. I feel it in my faith." },
+      { speaker: "Kael", emoji: "🗡️", text: "*checks blades one more time* I've never fought anything that was partially in another dimension before. New experience. Wonderful." },
+      { speaker: "Vorn", emoji: "🪓", text: "*stands, axe in hand* For the clan. *looks at you* For yours too. Let us end this." }
+    ],
     choices: [
       { text: "Stand. Walk into the Eye Chamber and face Seraphax.", nextNode: "act5_herald_confrontation" }
     ]
