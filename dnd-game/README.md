@@ -73,3 +73,19 @@ An audio synthesis system driven by the Web Audio API that creates custom, conte
 
 ---
 
+## 🗺️ Campaign Roadmap & Lore
+
+The campaign consists of five distinct Acts, taking the player from the frozen peak to the depth of the Far Realm rift:
+
+1. **Act 1: The High Pass — The Broken Seal**: Waking of the ancient runes, investigating the outpost, and the first skirmish with shadow hounds.
+2. **Act 2: The Sunken Vault — Crypt of Malveth**: The silent elven city, parleying or fighting the corrupted Captain Malveth, and securing the Mythal-vial.
+3. **Act 3: The Void Rift — Cultists of Zal'thrix**: Infiltrating the dark ritual at reality's edge, rescuing captives, and facing the Void Hierophant.
+4. **Act 4: The Dwarven Under-Empire — Sewers of Kheldrak**: Navigating the ratfolk warrens, seeking pathfinding help from Hermit Bram, and reaching the inner sanctum.
+5. **Act 5: The Dreaming One — Final Confrontation**: Facing Seraphax the Herald, using the Void-Anchor Shard, and deciding the fate of the Eye of the Void against Zal'thrix.
+
+### 👥 Companion Stories
+- **Lyra Dawnveil (Cleric)**: Plagued by visions of light fading under the mountain. She is the direct descendant of the high mage Coranthil Dawnveil who sealed the horror 3000 years ago.
+- **Kael Thornblade (Rogue)**: Seeking a specific Zhentarim-looted forbidden book, "The Whispers of the Star-weaver," which holds secrets to powerful high-magic, while trying to escape his criminal past.
+- **Vorn Ashmantle (Barbarian)**: Seeking vengeance against the specific shadow creatures that wiped out the Ashmantle clan three winters ago.
+
+
