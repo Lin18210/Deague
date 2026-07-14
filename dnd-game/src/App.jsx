@@ -581,7 +581,7 @@ You MUST respond strictly with a valid JSON array matching this schema structure
     } else {
       setGameState('active');
       setCurrentNodeKey('intro');
-      setJournal([{ title: STORY_NODES.intro.title, text: STORY_NODES.intro.text }]);
+      setJournal([{ title: STORY_NODES.intro.title, text: STORY_NODES.intro.text, act: STORY_NODES.intro.act, actLabel: STORY_NODES.intro.actLabel, companionDialogue: STORY_NODES.intro.companionDialogue }]);
     }
   };
 
@@ -1428,7 +1428,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
     }
 
     setCurrentNodeKey(nodeKey);
-    setJournal(prev => [...prev, { title: node.title, text: node.text, act: node.act, actLabel: node.actLabel }]);
+    setJournal(prev => [...prev, { title: node.title, text: node.text, act: node.act, actLabel: node.actLabel, companionDialogue: node.companionDialogue }]);
     
     // Endings trigger epilogue screen
     const endingNodes = ['ending_scholar', 'ending_guardian', 'ending_sacrifice'];
@@ -2390,6 +2390,25 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                             <p className="text-stone-100 text-base md:text-lg leading-relaxed font-serif tracking-wide first-letter:text-3xl first-letter:font-bold first-letter:text-amber-500 first-letter:mr-1">
                               {item.text}
                             </p>
+                            
+                            {item.companionDialogue && item.companionDialogue.length > 0 && (
+                              <div className="mt-4 p-4 rounded-lg bg-stone-950/60 border border-amber-950/20 space-y-3">
+                                <p className="text-[10px] font-sans tracking-wider text-amber-600/80 uppercase font-bold mb-1">Party Banter</p>
+                                <div className="space-y-2">
+                                  {item.companionDialogue.map((dialogue, dIdx) => (
+                                    <div key={dIdx} className="text-sm font-sans flex items-start gap-2.5 leading-relaxed text-stone-300">
+                                      <span className="text-base select-none shrink-0" role="img" aria-label={dialogue.speaker}>
+                                        {dialogue.emoji}
+                                      </span>
+                                      <div>
+                                        <span className="font-bold text-amber-500/90 mr-1.5">{dialogue.speaker}:</span>
+                                        <span>{dialogue.text}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -2429,7 +2448,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                               setCampaignMode('static');
                               setGameState('active');
                               setCurrentNodeKey('intro');
-                              setJournal([{ title: STORY_NODES.intro.title, text: STORY_NODES.intro.text }]);
+                              setJournal([{ title: STORY_NODES.intro.title, text: STORY_NODES.intro.text, act: STORY_NODES.intro.act, actLabel: STORY_NODES.intro.actLabel, companionDialogue: STORY_NODES.intro.companionDialogue }]);
                               setApiError(null);
                             }}
                             className="text-stone-400 hover:text-stone-200 cursor-pointer"
