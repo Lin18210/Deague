@@ -403,7 +403,7 @@ export default function App() {
   const [maxHp, setMaxHp] = useState(CLASSES.warrior.hp);
   const [mana, setMana] = useState(CLASSES.warrior.mana);
   const [maxMana, setMaxMana] = useState(CLASSES.warrior.mana);
-  const [currentNodeKey, setCurrentNodeKey] = useState('intro');
+  const [currentNodeKey, setCurrentNodeKey] = useState('intro_camp_chat');
   const [journal, setJournal] = useState([]);
   
   // Custom API configuration
@@ -580,8 +580,8 @@ You MUST respond strictly with a valid JSON array matching this schema structure
       await fetchNextAiNode("Begin the adventure! Introduce the dark environment and give initial options.");
     } else {
       setGameState('active');
-      setCurrentNodeKey('intro');
-      setJournal([{ title: STORY_NODES.intro.title, text: STORY_NODES.intro.text, act: STORY_NODES.intro.act, actLabel: STORY_NODES.intro.actLabel, companionDialogue: STORY_NODES.intro.companionDialogue }]);
+      setCurrentNodeKey('intro_camp_chat');
+      setJournal([{ title: STORY_NODES.intro_camp_chat.title, text: STORY_NODES.intro_camp_chat.text, act: STORY_NODES.intro_camp_chat.act, actLabel: STORY_NODES.intro_camp_chat.actLabel, companionDialogue: STORY_NODES.intro_camp_chat.companionDialogue }]);
     }
   };
 
@@ -1816,7 +1816,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
     handleClassChange('warrior');
     setGameState('character-select');
     setJournal([]);
-    setCurrentNodeKey('intro');
+    setCurrentNodeKey('intro_camp_chat');
     setCurrentAiNode(null);
     setApiError(null);
     setCombatBuffs({ battleCry: false, rage: false, huntersMarkActive: false, bardDebuff: false, enemyStunned: false });
@@ -2447,8 +2447,8 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                             onClick={() => {
                               setCampaignMode('static');
                               setGameState('active');
-                              setCurrentNodeKey('intro');
-                              setJournal([{ title: STORY_NODES.intro.title, text: STORY_NODES.intro.text, act: STORY_NODES.intro.act, actLabel: STORY_NODES.intro.actLabel, companionDialogue: STORY_NODES.intro.companionDialogue }]);
+                              setCurrentNodeKey('intro_camp_chat');
+                              setJournal([{ title: STORY_NODES.intro_camp_chat.title, text: STORY_NODES.intro_camp_chat.text, act: STORY_NODES.intro_camp_chat.act, actLabel: STORY_NODES.intro_camp_chat.actLabel, companionDialogue: STORY_NODES.intro_camp_chat.companionDialogue }]);
                               setApiError(null);
                             }}
                             className="text-stone-400 hover:text-stone-200 cursor-pointer"

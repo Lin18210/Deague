@@ -27,6 +27,68 @@ export const STORY_NODES = {
   // ACT I — THE HIGH PASS: THE BROKEN SEAL
   // ═══════════════════════════════════════════
 
+  intro_camp_chat: {
+    title: "Gathered at the Hearth",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "The campfire crackles weakly against the freezing gales of the High Pass, cast over the ruined stones of the old outpost. Before you descend into the pitch-black abyss below, you sit with your companions. The tension is thick; the mountain itself seems to tremble beneath you. Each of you has been drawn here by a different thread of fate. Before taking the plunge, you take a moment to look around the circle and speak with your comrades.",
+    visualType: "hearth",
+    choices: [
+      { text: "Speak to Lyra Dawnveil about the holy mission that calls her.", nextNode: "intro_lyra_motivation" },
+      { text: "Ask Kael Thornblade why a shadow rogue is risking his neck here.", nextNode: "intro_kael_motivation" },
+      { text: "Ask Vorn Ashmantle about the spirits of his clan.", nextNode: "intro_vorn_motivation" },
+      { text: "Stand up from the fire and approach the bleeding runestones near the cavern entrance.", nextNode: "intro" }
+    ]
+  },
+
+  intro_lyra_motivation: {
+    title: "Lyra's Vision",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "Lyra keeps her hands close to the fire, her silver holy symbol of Lathander catching the light. 'A month ago, I received a vision,' she says softly. 'A shadow with three burning eyes rising from a rift of liquid silver, swallowing the light of the Moonsea. But there was a guide in my dream — an ancient elven woman who wore a gold crest identical to the one in my family's old lockets. She was holding a golden-white sphere, sealing the beast. I woke up with the name Dawnveil ringing in my mind. I followed that pull here. My blood belongs to this mountain, somehow.'",
+    visualType: "hearth",
+    companionDialogue: [
+      { speaker: "Kael", emoji: "🗡️", text: "A family locket? Let's hope your ancestors didn't leave a pile of unpaid debts down there, Cleric." },
+      { speaker: "Vorn", emoji: "🪓", text: "Dreams are the voices of the ancestors when they cannot speak in the waking world. We must respect the dream." }
+    ],
+    choices: [
+      { text: "Ask the others about their motivations.", nextNode: "intro_camp_chat" },
+      { text: "Time is short. Stand and approach the bleeding runes.", nextNode: "intro" }
+    ]
+  },
+
+  intro_kael_motivation: {
+    title: "Kael's Hunt",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "Kael flips a silver coin between his fingers with practiced ease, a smirk playing on his lips. 'Let's just say I acquired some... highly sensitive ledgers from a Zhentarim supply caravan last month,' he says. 'They spoke of a forgotten vault of Myth Drannoran high mages under this pass, holding lost libraries of the Star-weavers. There's a particular book I need: the \"Whispers of the Star-weaver\". A client in Waterdeep is willing to pay enough gold to buy me a clean slate. I'm just here for the paper, my friends. Though I'd prefer to stay alive to spend the coin.'",
+    visualType: "hearth",
+    companionDialogue: [
+      { speaker: "Lyra", emoji: "🕊️", text: "Waterdeep clients and stolen books... Kael, the magic below is corrupted. We cannot play with void-magic for gold." },
+      { speaker: "Vorn", emoji: "🪓", text: "The city-boy hunts paper, but the mountain hunts blood. Make sure you don't get us killed for a purse of gold." }
+    ],
+    choices: [
+      { text: "Ask the others about their motivations.", nextNode: "intro_camp_chat" },
+      { text: "Time is short. Stand and approach the bleeding runes.", nextNode: "intro" }
+    ]
+  },
+
+  intro_vorn_motivation: {
+    title: "Vorn's Vengeance",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "Vorn doesn't look at you. He methodically runs a whetstone along the edge of his massive greataxe. 'Three winters ago, the rift opened on the lower peaks,' he growls, his voice deep as a landslide. 'My clan — the Ashmantles — we fought the beasts that poured out. Hounds of purple fire and shadow. I watched my chieftain, my sister, my brothers... torn to shreds. I am the last. I have hunted their scent through the snows for three years. It leads directly down this stairs. I do not care about visions or books. I want their hearts on my blade.'",
+    visualType: "hearth",
+    companionDialogue: [
+      { speaker: "Lyra", emoji: "🕊️", text: "Lathander will grant them peace through our actions, Vorn. We will find them." },
+      { speaker: "Kael", emoji: "🗡️", text: "*stops coin flip* The Ashmantles... I heard of that clan. Tough bastards. If they fell, we need to be very careful." }
+    ],
+    choices: [
+      { text: "Ask the others about their motivations.", nextNode: "intro_camp_chat" },
+      { text: "Time is short. Stand and approach the bleeding runes.", nextNode: "intro" }
+    ]
+  },
+
   intro: {
     title: "An Outpost Under Shadow",
     act: 1,
