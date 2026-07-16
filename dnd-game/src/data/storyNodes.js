@@ -225,25 +225,45 @@ export const STORY_NODES = {
     visualType: "dungeon",
     choices: [
       { text: "Study the murals more closely — they may contain clues about what awaits below.", nextNode: "act1_murals" },
+      { text: "Investigate a suspicious pile of collapsed rubble near the left corridor.", nextNode: "act1_zhent_corpse" },
       { text: "Take the left passage, which is larger and shows signs of recent footprints.", nextNode: "act1_left_passage" },
       { text: "Take the right passage, which is narrower but has a faint light emanating from its depths.", nextNode: "act1_right_passage" }
+    ]
+  },
+
+  act1_zhent_corpse: {
+    title: "The Fallen Scout",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "You pull back a slab of frozen granite to reveal a crushed corpse. It wears the dark leather armor and insignia of a Zhentarim scout. Kael crouches down, his face turning serious as he inspects the body. He pulls a blood-stained leather case from the scout's tunic. Inside is a ciphered map of the under-empire, alongside a contract order signed by a high-ranking Zhentarim commander. It orders the recovery of 'The Whispers of the Star-weaver' text from the library. 'They were here before us,' Kael mutters. 'And they were led by someone who knew how to bypass the outer wards. The same shadow-thief guild that branded me.'",
+    visualType: "dungeon",
+    companionDialogue: [
+      { speaker: "Kael", emoji: "🗡️", text: "I ran from the Zhentarim because they wanted to use this text to summon the void. They branded me a traitor when I stole their research. I came here to find the book and burn it, not sell it. If they reach the library before us, they will tear the seal wide open." },
+      { speaker: "Lyra", emoji: "🕊️", text: "You lied to us about your contract, Kael. But you did it to protect the book from them. That is a noble path." },
+      { speaker: "Vorn", emoji: "🪓", text: "A thief who steals from thieves to save his skin. Good. At least your blades are sharp. Let us hunt these Zhentarim scouts." }
+    ],
+    loot: { id: "zhent_cipher", name: "Zhentarim Coded Map", desc: "Lore Item. A coded map revealing hidden pathways and traps in the under-empire.", type: "tool", equipped: false },
+    choices: [
+      { text: "Now that we know the Zhentarim are here, study the murals closely.", nextNode: "act1_murals" },
+      { text: "Push forward into the left passage (recent footprints).", nextNode: "act1_left_passage" }
     ]
   },
 
   act1_murals: {
     title: "Myths Carved in Stone",
     act: 1,
-    text: "You hold your torch close and study the carvings. Your knowledge of ancient history pieces together the story: In -892 DR, the high mages of Myth Drannor descended to this mountain after tracking a *Dreaming One* — an aboleth-lich of immense power — that had been seeding mental parasites into the populace of the Moonsea region. They fought it here for forty days, and when they could not destroy it, they sealed it in the deepest vault using a Mythal-fragment as the anchor. The final panel shows the lead mage, Coranthil Dawnveil, sacrificing her own lifeforce to complete the seal. The seal has now broken. You understand what is waking below.",
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "You hold your torch close, illuminating the dust-coated carvings. As you brush away the cobwebs, the history of this place unfolds. In -892 DR, high mages of Myth Drannor pursued a horrific alien entity — Zal'thrix, the Dreaming One, an aboleth-lich of unfathomable power. They could not kill it, so they bound it deep in the earth. The final carving shows the lead mage, Coranthil Dawnveil, pouring her life-force into a glowing, skull-sized sphere (the Eye of the Void) to seal the breach. When Lyra steps forward to touch the carving, the dormant stone runes suddenly pulse with a brilliant gold light, resonating with her heartbeat. The ancient high magic recognizes her. She stands frozen, her breath caught in her throat.",
     visualType: "arcane",
     companionDialogue: [
-      { speaker: "Lyra", emoji: "🕊️", text: "Coranthil Dawnveil... the Cleric histories mention her. She gave everything. We cannot let that sacrifice be undone." },
-      { speaker: "Kael", emoji: "🗡️", text: "An aboleth-lich. Right. And here I thought this would be a quick job. Anyone want to turn back? Just me?" },
-      { speaker: "Vorn", emoji: "🪓", text: "*traces the final carving with one finger* My clan's elder spoke of the Three-Millennium Sleep. This is it." }
+      { speaker: "Lyra", emoji: "🕊️", text: "Lathander's grace... the runes, they are warm. Coranthil Dawnveil was the High Mage of Lathander who led the sealing... she was my ancestor. The visions of the three-eyed shadow... it wasn't a warning. It was a summons. The bloodline seal is failing, and I am the only one who can re-anchor it." },
+      { speaker: "Kael", emoji: "🗡️", text: "Wait, so your ancestor literally built this place and you're the key to locking up a god-lich? Lyra, we need to renegotiate our loot percentages if you're the main character." },
+      { speaker: "Vorn", emoji: "🪓", text: "The blood remembers. Your ancestor paid the price to bind the shadow, Lyra. We will make sure you live to complete the binding." }
     ],
     loot: { id: "lorebook_1", name: "Warden's Carved History", desc: "Lore Item. Details the sealing of Zal'thrix in -892 DR by Coranthil Dawnveil.", type: "tool", equipped: false },
     choices: [
-      { text: "This knowledge is vital. Take the left passage (recent footprints).", nextNode: "act1_left_passage" },
-      { text: "The right passage emits light — that could be arcane or it could be a trap.", nextNode: "act1_right_passage" }
+      { text: "This revelation changes everything. Let's explore the left passage (recent footprints).", nextNode: "act1_left_passage" },
+      { text: "Take the narrower right passage toward the flickering light.", nextNode: "act1_right_passage" }
     ]
   },
 
