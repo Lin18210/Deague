@@ -244,8 +244,34 @@ export const STORY_NODES = {
     ],
     loot: { id: "zhent_cipher", name: "Zhentarim Coded Map", desc: "Lore Item. A coded map revealing hidden pathways and traps in the under-empire.", type: "tool", equipped: false },
     choices: [
+      { text: "[DEXTERITY DC 13] Have Kael use his thieves' tools to pick the lock on the scout's frozen strongbox.", check: { stat: "dexterity", difficulty: 13, successNode: "act1_zhent_box_success", failNode: "act1_zhent_box_fail" } },
       { text: "Now that we know the Zhentarim are here, study the murals closely.", nextNode: "act1_murals" },
       { text: "Push forward into the left passage (recent footprints).", nextNode: "act1_left_passage" }
+    ]
+  },
+
+  act1_zhent_box_success: {
+    title: "Locked Box Opened",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "Kael crouches over the frost-bitten strongbox, selecting a pair of delicate tension wrenches from his leather kit. With a slow breath, he guides them into the keyhole. A soft, metallic *click* echoes in the chamber as the frozen latch releases. Inside, he finds a pouch of gold coins, a small vial of red liquid that radiates intense heat, and a note describing Zhentarim patrol routines. 'Still got the touch,' Kael chuckles, tossing you the vial. 'This is alchemist's fire. Nasty stuff, handles shadow beasts nicely.'",
+    visualType: "dungeon",
+    loot: { id: "alchem_fire", name: "Alchemist's Fire", desc: "Consumable. Deal bonus damage in combat.", type: "potion", value: 15 },
+    choices: [
+      { text: "Pocket the fire, study the murals closely.", nextNode: "act1_murals" },
+      { text: "Push forward into the left passage.", nextNode: "act1_left_passage" }
+    ]
+  },
+
+  act1_zhent_box_fail: {
+    title: "Lockpicks Broken",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "The intense mountain cold has made the lock's tumbler brittle. As Kael applies pressure, a sharp snap rings out — the tip of his pick breaks off inside the mechanism, jamming it completely. Kael swears under his breath and stands up. 'The cold won this round,' he mutters. 'Let's move before we attract attention.'",
+    visualType: "dungeon",
+    choices: [
+      { text: "Leave the locked box and study the murals.", nextNode: "act1_murals" },
+      { text: "Push forward into the left passage.", nextNode: "act1_left_passage" }
     ]
   },
 
