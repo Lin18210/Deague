@@ -293,10 +293,50 @@ export const STORY_NODES = {
     ]
   },
 
+  act1_left_passage_intro: {
+    title: "Shadows in the Guardroom",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "The left passage leads into a broad, vaulted guardroom. Bones are scattered across the floor, and deep claw marks rake the stones. The freezing air smells of ozone and decay. Suddenly, Vorn Ashmantle freezes. He drops to one knee, staring at the ash-patterned claw marks. His breathing becomes rapid and shallow; his grip on his greataxe is so tight his knuckles turn white. 'The scent...' he whispers, his voice trembling with a mixture of raw grief and sudden, blinding fury. 'It's them. The shadow beasts that wiped out my clan. The Ashmantles.'",
+    visualType: "battle",
+    choices: [
+      { text: "[CHARISMA DC 12] Place a hand on Vorn's shoulder and steady him, urging him to focus his rage.", check: { stat: "charisma", difficulty: 12, successNode: "act1_vorn_focus", failNode: "act1_vorn_grief" } },
+      { text: "Draw your weapon. Let Vorn's rage lead the charge into the room.", nextNode: "act1_left_passage" }
+    ]
+  },
+
+  act1_vorn_focus: {
+    title: "Vorn's Focus",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "You look Vorn in the eyes, speaking with quiet, absolute certainty. 'They will pay for what they did, Vorn. But we fight as a pack, not as beasts. Focus.' Vorn breathes in slowly, his wild eyes centering. He nods, a grim, determined smile touching his lips. 'As a pack. Yes. Let us bleed them.'",
+    visualType: "hearth",
+    companionDialogue: [
+      { speaker: "Vorn", emoji: "🪓", text: "Thank you. My clan was strong because we stood together. I forgot that in my hunger for blood. I will stand with you." },
+      { speaker: "Lyra", emoji: "🕊️", text: "Lathander's light shines on a calm mind, Vorn. We stand with you." },
+      { speaker: "Kael", emoji: "🗡️", text: "Good. I prefer my barbarians pointing their axes at the enemies, not swinging wildly near my neck." }
+    ],
+    choices: [
+      { text: "Enter the guardroom, weapons ready.", nextNode: "act1_left_passage" }
+    ]
+  },
+
+  act1_vorn_grief: {
+    title: "Blinded by Rage",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "You try to speak, but the grief is a floodgate that has burst. Vorn lets out a roaring battle cry, his eyes bloodshot as he storms blindly into the room. His rage is magnificent but reckless. He triggers a tripwire you didn't notice, causing a shower of loose rocks to fall upon you and him before the beast emerges! The impact leaves you bruised and ringing.",
+    visualType: "battle",
+    damage: 5,
+    choices: [
+      { text: "Recover from the rocks and confront the shadow beast!", nextNode: "act1_left_passage" }
+    ]
+  },
+
   act1_left_passage: {
     title: "The Hound's Territory",
     act: 1,
-    text: "The left passage leads into a broad guardroom, its floor strewn with shattered bones and scraps of black leather armour. The footprints end here — they belong to someone who never made it back. Claw marks three inches deep rake the walls, and the smell of void-energy is overwhelming. Suddenly, the shadows in the far corner begin to coagulate, drawing inward. Twin points of purple fire ignite in the darkness. A Shadow-Hound — a beast formed of condensed void-energy and predatory instinct — steps into the torchlight and fixes you with its burning gaze.",
+    text: "You step into the guardroom. Claw marks three inches deep rake the walls, and the smell of void-energy is overwhelming. Suddenly, the shadows in the far corner begin to coagulate, drawing inward. Twin points of purple fire ignite in the darkness. A Shadow-Hound — a beast formed of condensed void-energy and predatory instinct — steps into the torchlight and fixes you with its burning gaze.",
     visualType: "battle",
     choices: [
       { text: "Draw your weapon and charge — meet the beast head on!", combatStart: true, enemyGroup: "lone_shadow_hound", nextNode: "act1_hound_victory" },
@@ -313,7 +353,7 @@ export const STORY_NODES = {
     loot: { id: "sword_silver", name: "Coranthil's Warding Blade", desc: "Silvered shortsword. +2 to STR Checks when equipped. Deals bonus damage to undead and shadow creatures.", statBonus: { strength: 2 }, type: "weapon", equipped: false },
     choices: [
       { text: "Read the sealed letter before proceeding.", nextNode: "act1_sealed_letter" },
-      { text: "Take the blade and push forward through the left passage.", nextNode: "act1_left_passage" }
+      { text: "Take the blade and push forward through the left passage.", nextNode: "act1_left_passage_intro" }
     ]
   },
 
@@ -323,7 +363,7 @@ export const STORY_NODES = {
     text: "The letter is brittle with age but the ink has been preserved by a mild Prestidigitation spell. It reads: *'To whatever wanderer finds this: The Dreaming One sleeps yet, but not for long. The Seal of Mythal cannot be repaired — only the Eye of the Void, the artifact used to anchor the original Mythal-fragment, can reestablish the binding. It lies in the deepest vault. Coranthil's bloodline alone may wield it. I pray that bloodline has survived. Do not let the Herald reach the surface. —Thaelon, Second Warden, 341 DR'*. Three thousand years of preparation. Now it falls to you.",
     visualType: "arcane",
     choices: [
-      { text: "With the stakes clear, enter the left passage to confront what stalks there.", nextNode: "act1_left_passage" }
+      { text: "With the stakes clear, enter the left passage to confront what stalks there.", nextNode: "act1_left_passage_intro" }
     ]
   },
 
@@ -334,8 +374,7 @@ export const STORY_NODES = {
     visualType: "arcane",
     loot: { id: "amulet_command", name: "Void-Crystal Command Amulet", desc: "Adds +2 to Charisma Checks when equipped. Glows faintly in the presence of shadow creatures.", type: "weapon", statBonus: { charisma: 2 }, equipped: true },
     choices: [
-      { text: "Claim the amulet. Rest briefly at the camp site before going deeper.", nextNode: "act1_camp" },
-      { text: "Claim the amulet and press forward without rest.", nextNode: "act1_vault_entrance" }
+      { text: "Claim the amulet and proceed toward the echoing chasm ahead.", nextNode: "act1_echoing_bridge" }
     ]
   },
 
@@ -346,8 +385,7 @@ export const STORY_NODES = {
     visualType: "arcane",
     loot: { id: "ring_empathy", name: "Ring of Shadow Empathy", desc: "Adds +2 to Wisdom Checks when equipped. Shadow creatures are less likely to attack you first.", type: "weapon", statBonus: { wisdom: 2 }, equipped: true },
     choices: [
-      { text: "Wear the ring. Rest briefly before going deeper.", nextNode: "act1_camp" },
-      { text: "Wear the ring and press forward immediately.", nextNode: "act1_vault_entrance" }
+      { text: "Wear the ring and proceed toward the echoing chasm ahead.", nextNode: "act1_echoing_bridge" }
     ]
   },
 
@@ -369,34 +407,107 @@ export const STORY_NODES = {
     visualType: "arcane",
     loot: { id: "pendant_void", name: "Void-Crystal Pendant", desc: "Adds +1 to Constitution Checks when worn. Faintly warm to the touch.", type: "weapon", statBonus: { constitution: 1 }, equipped: false },
     choices: [
-      { text: "Rest for a moment to tend wounds before pressing on.", nextNode: "act1_camp" },
-      { text: "The noise from deeper inside grows louder — press forward now.", nextNode: "act1_vault_entrance" }
+      { text: "Claim the pendant and proceed toward the echoing chasm ahead.", nextNode: "act1_echoing_bridge" }
     ]
   },
 
-  act1_camp: {
-    title: "Respite in the Dark",
+  act1_echoing_bridge: {
+    title: "The Echoing Chasm",
     act: 1,
-    text: "You find a defensible corner of the antechamber and make a brief camp — no bedroll, just your back against the wall and a shielded torch. The silence of the deep mountain presses in around you. You eat a strip of salted provisions, tend your wounds with practiced efficiency, and spend a few minutes studying the passages ahead. Your companions circle the area, keeping watch. The rest is brief but restorative. The sounds from below have quieted for now. Whatever stirs in the vault has either retreated or is waiting.",
-    visualType: "camp",
-    heal: 8,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "Beyond the guardroom, the path narrows to a sheer stone archway bridging a bottomless chasm. Below, you can hear the faint, echoing whispers of the Dreaming One drifting up from the black void. Suddenly, three large shadow tendrils erupt from the abyss, wrapping around the bridge's pillars. The stone under your feet begins to crack and crumble. The crossing is blocked, and staying still means plunging into the dark. You must act instantly, utilizing your party's strengths.",
+    visualType: "battle",
+    choices: [
+      { text: "Have Lyra Dawnveil cast Lathander's Light to burn away the shadow tendrils.", nextNode: "act1_bridge_lyra" },
+      { text: "Have Kael Thornblade fire a grappling line to secure a crossing.", nextNode: "act1_bridge_kael" },
+      { text: "Have Vorn Ashmantle hold the collapsing archway pillars with raw strength.", nextNode: "act1_bridge_vorn" }
+    ]
+  },
+
+  act1_bridge_lyra: {
+    title: "Morninglord's Brilliance",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "Lyra raises her holy symbol high. 'Morninglord, let your light pierce this shadow!' she screams. A blinding sphere of radiant sunlight erupts from her hands, disintegrating the shadow tendrils. They recoil into the chasm with a high-pitched shriek of pain. The path is clear, and the bridge stabilizes just long enough for you all to dash across. Lyra breathes hard but smiles, her faith vindicated.",
+    visualType: "arcane",
     companionDialogue: [
-      { speaker: "Lyra", emoji: "🕊️", text: "*quietly* I've asked Lathander for guidance. The light feels distant down here, but it answers. We are not abandoned." },
-      { speaker: "Kael", emoji: "🗡️", text: "*sharpening a blade* I've broken into six Zhentarim vaults and three noble crypts. Never heard a mountain breathe before. I don't like it." },
-      { speaker: "Vorn", emoji: "🪓", text: "Rest. We fight better rested. The dead can wait another hour — they have waited three thousand years already." }
+      { speaker: "Lyra", emoji: "🕊️", text: "The light still answers... even here. My ancestor's magic may be degraded, but Lathander's promise is eternal." },
+      { speaker: "Kael", emoji: "🗡️", text: "Remind me never to make you angry, Cleric. That was... actually impressive." },
+      { speaker: "Vorn", emoji: "🪓", text: "A worthy strike. The shadow fears the flame." }
     ],
     choices: [
-      { text: "Recharged. Move forward to the Vault entrance.", nextNode: "act1_vault_entrance" }
+      { text: "Push forward toward the gates of the under-empire.", nextNode: "act1_gate_battle" }
     ]
   },
 
-  act1_vault_entrance: {
-    title: "Gates of the Sunken Vault",
+  act1_bridge_kael: {
+    title: "Line in the Dark",
     act: 1,
-    text: "The antechamber ends at a massive iron gate, twenty feet tall, worked with relief sculptures of dragons and serpents devouring one another in an endless cycle. The gate bears a plaque in ancient Common: *'VAULT OF THE SUNKEN EMPIRE — HOUSE EMBERVANE — THE DEAD KEEP THEIR OATHS.'* The gate stands ajar — already forced open from within. Beyond it, a grand staircase descends into what appears to be an underground city. Ghostly lights drift between distant towers of black stone. You have reached the edge of the ancient under-empire.",
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "Kael acts without hesitation. He fires his custom grappling hook across the chasm, anchoring it deeply into a sturdy stone projection on the opposite side. 'Grab the rope! Swing!' he yells. You all swing across one by one, landing on the far ledge just as the central arch of the bridge collapses into the abyss with a deafening roar. Kael cuts the line and looks back with a smirk.",
     visualType: "dungeon",
+    companionDialogue: [
+      { speaker: "Kael", emoji: "🗡️", text: "See? A good rogue is always prepared. Warding magic is nice, but hempen rope has never failed me once." },
+      { speaker: "Lyra", emoji: "🕊️", text: "That was close, Kael. Thank you for your quick thinking." },
+      { speaker: "Vorn", emoji: "🪓", text: "You have strong arms for a city-boy. I will not call you paper-chaser again. Today." }
+    ],
     choices: [
-      { text: "Descend the grand staircase into the Sunken Vault.", nextNode: "act2_arrival" }
+      { text: "Push forward toward the gates of the under-empire.", nextNode: "act1_gate_battle" }
+    ]
+  },
+
+  act1_bridge_vorn: {
+    title: "Pillar of Clan Ashmantle",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "Vorn roars, planting his massive shoulder against the buckling stone pillar. Veins stand out on his neck as he holds back tonnes of falling granite with pure, impossible barbarian will. 'RUN!' he bellows. You and the others vault across the crumbling bridge. Vorn leaps after you just as the pillars give way entirely, catching the ledge with one hand and pulling himself up with a grunt.",
+    visualType: "battle",
+    companionDialogue: [
+      { speaker: "Vorn", emoji: "🪓", text: "My father held the cave-in at the iron mine for ten minutes. I can hold a bridge. The Ashmantles do not break." },
+      { speaker: "Lyra", emoji: "🕊️", text: "That was raw courage, Vorn. Lathander kept your hand steady." },
+      { speaker: "Kael", emoji: "🗡️", text: "I think my ribs cracked just watching that. Note to self: never play dice against Vorn." }
+    ],
+    choices: [
+      { text: "Push forward toward the gates of the under-empire.", nextNode: "act1_gate_battle" }
+    ]
+  },
+
+  act1_gate_battle: {
+    title: "The Gates of Embervane",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "You stand before the massive iron gates of the Sunken Vault. But the Zhentarim scouts who arrived before you have done something terrible: they tried to force the gates using corrupted shadow-keys, and the magical backlash has summoned a pack of elite Shadow-Hounds! An enormous Alpha Shadow-Hound and its pups stand between you and the gate, their violet eyes burning with the raw energy of the broken seal. You must fight together to clear the way.",
+    visualType: "battle",
+    choices: [
+      { text: "Attack the shadow hound pack!", combatStart: true, enemyGroup: "shadow_hound_pack", nextNode: "act1_gate_victory" }
+    ]
+  },
+
+  act1_gate_victory: {
+    title: "The Gates Cleared",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "With a final decisive blow, the Alpha Shadow-Hound dissolves into violet mist. The path to the gate is open. But before you step through the threshold of House Embervane, you decide to make a secure camp in the ruins of the gatehouse. The journey ahead will be long, and the revelations of this day weigh heavily on everyone. You tend your wounds, rest, and prepare for the descent.",
+    visualType: "camp",
+    heal: 15,
+    choices: [
+      { text: "Rest and talk with your companions around the fire.", nextNode: "act1_pre_vault_camp" }
+    ]
+  },
+
+  act1_pre_vault_camp: {
+    title: "Before the Descent",
+    act: 1,
+    actLabel: "ACT I — THE HIGH PASS",
+    text: "The campfire in the gatehouse ruins casts long shadows against the colossal iron gates. Lyra tends to your wounds, her magic warm. Kael maps out their route using the ciphered map, while Vorn sits silently, staring at the gate. There is a deep, unspoken bond forming between you all — you are no longer just travelers; you are the wardens of this mountain.",
+    visualType: "camp",
+    companionDialogue: [
+      { speaker: "Lyra", emoji: "🕊️", text: "My ancestor sacrificed her life here. I am ready to do whatever it takes to complete her work. But I am glad I have you all by my side." },
+      { speaker: "Kael", emoji: "🗡️", text: "Those Zhentarim scouts were fools. But we have their maps now. I'll make sure we find that library, but... I'll watch your back first, Cleric. Let's make sure we all get out of here." },
+      { speaker: "Vorn", emoji: "🪓", text: "My ancestors sleep easier tonight. The hounds bleed like anything else. Let us go down and kill the rest. We stand as a pack." }
+    ],
+    choices: [
+      { text: "Rested and prepared, push open the massive gates and descend into the Sunken Vault.", nextNode: "act2_arrival" }
     ]
   },
 
