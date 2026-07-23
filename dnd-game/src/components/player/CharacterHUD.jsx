@@ -1,5 +1,7 @@
-import { Heart, Zap, Shield, Star, ScrollText, FlaskConical } from 'lucide-react';
+import React, { useState } from 'react';
+import { Heart, Zap, Shield, Star, ScrollText, FlaskConical, BookOpen } from 'lucide-react';
 import { getAbilityMod } from '../../data/initialCharacter';
+import SpellbookModal from './SpellbookModal';
 
 function StatBar({ icon: Icon, label, current, max, color }) {
   const pct = max > 0 ? (current / max) * 100 : 0;
@@ -60,6 +62,7 @@ function ReputationBar({ reputation }) {
 }
 
 export default function CharacterHUD({ character, combatActive, storyState, onUsePotion }) {
+  const [isSpellbookOpen, setIsSpellbookOpen] = useState(false);
   const stats = character.stats;
   const strMod = getAbilityMod(character, 'STR');
   const dexMod = getAbilityMod(character, 'DEX');
@@ -94,6 +97,27 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
         </div>
         {storyState && <ReputationBar reputation={storyState.playerReputation} />}
       </div>
+
+      <div className="pt-1">
+        <button
+          onClick={() => setIsSpellbookOpen(true)}
+          className="w-full py-2 px-3 bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-700/50 hover:border-indigo-400 text-indigo-200 rounded-lg font-display text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+        >
+          <BookOpen size={14} className="text-indigo-400" />
+          <span>Open Spellbook & Grimoire</span>
+        </button>
+      </div>
+
+      <SpellbookModal
+        isOpen={isSpellbookOpen}
+        onClose={() => setIsSpellbookOpen(false)}
+        character={character}
+        onCastSpell={(spell) => {
+          if (character.mana >= spell.manaCost && character.mana !== undefined) {
+            character.mana -= spell.manaCost;
+          }
+        }}
+      />
 
       {activeQuests.length > 0 && (
         <div>
