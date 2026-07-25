@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Heart, Zap, Shield, Star, ScrollText, FlaskConical, BookOpen } from 'lucide-react';
 import { getAbilityMod } from '../../data/initialCharacter';
 import SpellbookModal from './SpellbookModal';
+import AlchemyCrafting from './AlchemyCrafting';
 
 function StatBar({ icon: Icon, label, current, max, color }) {
   const pct = max > 0 ? (current / max) * 100 : 0;
@@ -63,6 +64,7 @@ function ReputationBar({ reputation }) {
 
 export default function CharacterHUD({ character, combatActive, storyState, onUsePotion }) {
   const [isSpellbookOpen, setIsSpellbookOpen] = useState(false);
+  const [isAlchemyOpen, setIsAlchemyOpen] = useState(false);
   const stats = character.stats;
   const strMod = getAbilityMod(character, 'STR');
   const dexMod = getAbilityMod(character, 'DEX');
@@ -98,13 +100,21 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
         {storyState && <ReputationBar reputation={storyState.playerReputation} />}
       </div>
 
-      <div className="pt-1">
+      <div className="pt-1 space-y-2">
         <button
           onClick={() => setIsSpellbookOpen(true)}
           className="w-full py-2 px-3 bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-700/50 hover:border-indigo-400 text-indigo-200 rounded-lg font-display text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
         >
           <BookOpen size={14} className="text-indigo-400" />
           <span>Open Spellbook & Grimoire</span>
+        </button>
+
+        <button
+          onClick={() => setIsAlchemyOpen(true)}
+          className="w-full py-2 px-3 bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-700/50 hover:border-emerald-400 text-emerald-200 rounded-lg font-display text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+        >
+          <FlaskConical size={14} className="text-emerald-400" />
+          <span>Alchemy & Crafting Lab</span>
         </button>
       </div>
 
@@ -115,6 +125,17 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
         onCastSpell={(spell) => {
           if (character.mana >= spell.manaCost && character.mana !== undefined) {
             character.mana -= spell.manaCost;
+          }
+        }}
+      />
+
+      <AlchemyCrafting
+        isOpen={isAlchemyOpen}
+        onClose={() => setIsAlchemyOpen(false)}
+        character={character}
+        onBrewPotion={(newItem) => {
+          if (character?.inventory) {
+            character.inventory.push(newItem);
           }
         }}
       />
