@@ -847,6 +847,81 @@ export const STORY_NODES = {
     ]
   },
 
+  act3_malygos_reliquary: {
+    title: "Secret Reliquary of Malygos",
+    act: 3,
+    actLabel: "ACT III — THE VOID RIFT",
+    text: "Tucked behind a tapestry of woven starlight lies the forgotten sanctuary of Star-Weaver Malygos. Blue ethereal sparks drift like embers in zero gravity. In the center of the chamber, suspended over a pool of quicksilver, floats the Astral Conduit Relic — an ancient artifact capable of channeling pure stellar energy.",
+    visualType: "arcane",
+    companionDialogue: [
+      { speaker: "Kael", emoji: "🗡️", text: "Look at those glyphs... Malygos was the high mage who mapped the constellations of the Void!" },
+      { speaker: "Lyra", emoji: "🕊️", text: "The magic here isn't corrupted — it's radiant and pristine. A true sanctuary!" }
+    ],
+    choices: [
+      { text: "[INTELLIGENCE DC 13] Decipher the starlight lock to retrieve the Astral Conduit Relic.", check: { stat: "intelligence", difficulty: 13, successNode: "act3_reliquary_success", failNode: "act3_reliquary_trap" } },
+      { text: "Leave the relic untouched and return to the main Rift path.", nextNode: "act3_rift_approach" }
+    ]
+  },
+
+  act3_reliquary_success: {
+    title: "Astral Conduit Claimed",
+    act: 3,
+    text: "With a gentle whisper of elven mantras, the quicksilver parts! The Astral Conduit Relic floats into your hands, glowing with comforting warmth.",
+    visualType: "arcane",
+    loot: { id: "astral_conduit", name: "Astral Conduit Relic", desc: "Legendary Relic. Enhances spellcasting damage and restores 10 MP at start of combat.", type: "relic", statBonus: { int: 2, wis: 2 }, equipped: true },
+    choices: [
+      { text: "Empowered by the relic, press onward toward the Rift approach.", nextNode: "act3_rift_approach" }
+    ]
+  },
+
+  act3_reliquary_trap: {
+    title: "Starlight Ward Tripped!",
+    act: 3,
+    text: "A sharp hum echoes as the ward flares out of alignment! Astral feedback strikes the party for 6 Arcane damage before the seal re-stabilizes.",
+    visualType: "battle",
+    damage: 6,
+    choices: [
+      { text: "Recover from the shock and press onward to the Rift approach.", nextNode: "act3_rift_approach" }
+    ]
+  },
+
+  act4_durin_forge: {
+    title: "Fallen Forge of Durin Fire-Beard",
+    act: 4,
+    actLabel: "ACT IV — DWARVEN UNDER-EMPIRE",
+    text: "Deep in the adamantine roots of the mountain, you discover Durin's Great Anvil. Runes of flame still glow red along its sides. A mechanical dwarf-golem sits slumbering beside a pile of mithril ore.",
+    visualType: "hearth",
+    companionDialogue: [
+      { speaker: "Vorn", emoji: "🪓", text: "Durin Fire-Beard... my grandfather spoke of his hammer. If we re-ignite this anvil, we can temper our weapons for the final battle!" }
+    ],
+    choices: [
+      { text: "[STRENGTH DC 14] Strike the furnace bellows with all your might to re-ignite the ancestral flames!", check: { stat: "strength", difficulty: 14, successNode: "act4_forge_ignited", failNode: "act4_forge_fail" } },
+      { text: "Press onward through the Under-Empire toward the Dreaming Chamber.", nextNode: "act4_chamber_entrance" }
+    ]
+  },
+
+  act4_forge_ignited: {
+    title: "Ancestral Flame Awakened",
+    act: 4,
+    text: "Sparks fly like lightning! The furnace roars to life with blinding golden flame. Vorn steps up to the anvil and tempers the party's weapons with rune-carved mithril edges (+2 Damage to all attacks).",
+    visualType: "hearth",
+    heal: 15,
+    loot: { id: "rune_sharpening", name: "Mithril Rune-Edge", desc: "Dwarven masterwork tempering. Increases weapon critical hit chance by 5%.", type: "weapon_buff" },
+    choices: [
+      { text: "Fully prepared and healed, march to the Dreaming Chamber entrance!", nextNode: "act4_chamber_entrance" }
+    ]
+  },
+
+  act4_forge_fail: {
+    title: "Cold Ashes",
+    act: 4,
+    text: "The bellows creak and puff out only a cloud of soot. The ancient furnace remains dark, but the exercise stirs your blood.",
+    visualType: "dungeon",
+    choices: [
+      { text: "Dust off the soot and move toward the Dreaming Chamber.", nextNode: "act4_chamber_entrance" }
+    ]
+  },
+
   act3_cultist_victory: {
     title: "The Ritual Disrupted",
     act: 3,
