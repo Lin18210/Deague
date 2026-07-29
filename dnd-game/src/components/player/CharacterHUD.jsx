@@ -3,6 +3,7 @@ import { Heart, Zap, Shield, Star, ScrollText, FlaskConical, BookOpen } from 'lu
 import { getAbilityMod } from '../../data/initialCharacter';
 import SpellbookModal from './SpellbookModal';
 import AlchemyCrafting from './AlchemyCrafting';
+import QuestJournal from './QuestJournal';
 
 function StatBar({ icon: Icon, label, current, max, color }) {
   const pct = max > 0 ? (current / max) * 100 : 0;
@@ -65,6 +66,7 @@ function ReputationBar({ reputation }) {
 export default function CharacterHUD({ character, combatActive, storyState, onUsePotion }) {
   const [isSpellbookOpen, setIsSpellbookOpen] = useState(false);
   const [isAlchemyOpen, setIsAlchemyOpen] = useState(false);
+  const [isJournalOpen, setIsJournalOpen] = useState(false);
   const stats = character.stats;
   const strMod = getAbilityMod(character, 'STR');
   const dexMod = getAbilityMod(character, 'DEX');
@@ -116,6 +118,14 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
           <FlaskConical size={14} className="text-emerald-400" />
           <span>Alchemy & Crafting Lab</span>
         </button>
+
+        <button
+          onClick={() => setIsJournalOpen(true)}
+          className="w-full py-2 px-3 bg-amber-950/70 hover:bg-amber-900 border border-amber-700/50 hover:border-amber-400 text-amber-200 rounded-lg font-display text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+        >
+          <ScrollText size={14} className="text-amber-400" />
+          <span>Quest Journal & Achievements</span>
+        </button>
       </div>
 
       <SpellbookModal
@@ -138,6 +148,12 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
             character.inventory.push(newItem);
           }
         }}
+      />
+
+      <QuestJournal
+        isOpen={isJournalOpen}
+        onClose={() => setIsJournalOpen(false)}
+        storyState={storyState}
       />
 
       {activeQuests.length > 0 && (
