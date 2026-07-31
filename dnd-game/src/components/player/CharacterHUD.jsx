@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Heart, Zap, Shield, Star, ScrollText, FlaskConical, BookOpen } from 'lucide-react';
+import { Heart, Zap, Shield, Star, ScrollText, FlaskConical, BookOpen, HeartHandshake } from 'lucide-react';
 import { getAbilityMod } from '../../data/initialCharacter';
 import SpellbookModal from './SpellbookModal';
 import AlchemyCrafting from './AlchemyCrafting';
 import QuestJournal from './QuestJournal';
+import CompanionAffinity from './CompanionAffinity';
 
 function StatBar({ icon: Icon, label, current, max, color }) {
   const pct = max > 0 ? (current / max) * 100 : 0;
@@ -67,6 +68,7 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
   const [isSpellbookOpen, setIsSpellbookOpen] = useState(false);
   const [isAlchemyOpen, setIsAlchemyOpen] = useState(false);
   const [isJournalOpen, setIsJournalOpen] = useState(false);
+  const [isAffinityOpen, setIsAffinityOpen] = useState(false);
   const stats = character.stats;
   const strMod = getAbilityMod(character, 'STR');
   const dexMod = getAbilityMod(character, 'DEX');
@@ -126,6 +128,14 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
           <ScrollText size={14} className="text-amber-400" />
           <span>Quest Journal & Achievements</span>
         </button>
+
+        <button
+          onClick={() => setIsAffinityOpen(true)}
+          className="w-full py-2 px-3 bg-sky-950/70 hover:bg-sky-900 border border-sky-700/50 hover:border-sky-400 text-sky-200 rounded-lg font-display text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+        >
+          <HeartHandshake size={14} className="text-sky-400" />
+          <span>Party Bonds & Affinity Perks</span>
+        </button>
       </div>
 
       <SpellbookModal
@@ -154,6 +164,11 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
         isOpen={isJournalOpen}
         onClose={() => setIsJournalOpen(false)}
         storyState={storyState}
+      />
+
+      <CompanionAffinity
+        isOpen={isAffinityOpen}
+        onClose={() => setIsAffinityOpen(false)}
       />
 
       {activeQuests.length > 0 && (
