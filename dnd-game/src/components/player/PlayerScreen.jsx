@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Sword, Shield, Sparkles, Flame, Scroll, User, BookOpen, Dice5, Heart, ChevronRight, ShieldAlert, Skull, FlaskConical, Volume2, VolumeX, RefreshCw } from 'lucide-react';
 import ChoiceButtons from './ChoiceButtons';
 import DiceTower from './DiceTower';
+import EnvironmentalHazards from './EnvironmentalHazards';
 import { getAbilityMod } from '../../data/initialCharacter';
 import audio from '../../utils/audioEngine';
 
@@ -124,6 +125,8 @@ export default function PlayerScreen({
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-600 animate-pulse" />
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-parchment flex flex-col justify-start relative">
+              <EnvironmentalHazards currentAct={scene.act || 1} />
+
               {(narrative || scene.description) && (
                 <div className="space-y-3 animate-ink-bleed">
                   <h3 className="text-xs text-amber-500 tracking-widest uppercase font-bold flex items-center gap-2" style={{ fontFamily: 'system-ui, sans-serif' }}>
