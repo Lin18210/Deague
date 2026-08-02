@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Heart, Zap, Shield, Star, ScrollText, FlaskConical, BookOpen, HeartHandshake } from 'lucide-react';
+import { Heart, Zap, Shield, Star, ScrollText, FlaskConical, BookOpen, HeartHandshake, Trophy } from 'lucide-react';
 import { getAbilityMod } from '../../data/initialCharacter';
 import SpellbookModal from './SpellbookModal';
 import AlchemyCrafting from './AlchemyCrafting';
 import QuestJournal from './QuestJournal';
 import CompanionAffinity from './CompanionAffinity';
+import CampaignChronicle from './CampaignChronicle';
 
 function StatBar({ icon: Icon, label, current, max, color }) {
   const pct = max > 0 ? (current / max) * 100 : 0;
@@ -69,6 +70,7 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
   const [isAlchemyOpen, setIsAlchemyOpen] = useState(false);
   const [isJournalOpen, setIsJournalOpen] = useState(false);
   const [isAffinityOpen, setIsAffinityOpen] = useState(false);
+  const [isChronicleOpen, setIsChronicleOpen] = useState(false);
   const stats = character.stats;
   const strMod = getAbilityMod(character, 'STR');
   const dexMod = getAbilityMod(character, 'DEX');
@@ -136,6 +138,14 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
           <HeartHandshake size={14} className="text-sky-400" />
           <span>Party Bonds & Affinity Perks</span>
         </button>
+
+        <button
+          onClick={() => setIsChronicleOpen(true)}
+          className="w-full py-2 px-3 bg-yellow-950/70 hover:bg-yellow-900 border border-yellow-700/50 hover:border-yellow-400 text-yellow-200 rounded-lg font-display text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+        >
+          <Trophy size={14} className="text-yellow-400" />
+          <span>Campaign Victory Chronicle</span>
+        </button>
       </div>
 
       <SpellbookModal
@@ -169,6 +179,13 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
       <CompanionAffinity
         isOpen={isAffinityOpen}
         onClose={() => setIsAffinityOpen(false)}
+      />
+
+      <CampaignChronicle
+        isOpen={isChronicleOpen}
+        onClose={() => setIsChronicleOpen(false)}
+        character={character}
+        storyState={storyState}
       />
 
       {activeQuests.length > 0 && (
