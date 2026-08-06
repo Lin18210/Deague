@@ -73,3 +73,42 @@ export function recordRoll(label, value, max) {
 export function getRollHistory() { return [..._history]; }
 export function clearRollHistory() { _history.length = 0; }
 
+/**
+ * Resolves a D&D 5e ability check against a Target DC with optional advantage/disadvantage
+ */
+export function rollCheckWithDC(dc, modifier = 0, options = {}) {
+  const { advantage = false, disadvantage = false, critThreshold = 20 } = options;
+  let rollData;
+
+  if (advantage && !disadvantage) {
+    rollData = rollWithAdvantage(modifier);
+  } else if (disadvantage && !advantage) {
+    rollData = rollWithDisadvantage(modifier);
+  } else {
+    rollData = rollD20(modifier);
+  }
+
+  const baseRoll = rollData.roll || rollData.result;
+  const total = baseRoll + modifier;
+  const isCrit = baseRoll >= critThreshold;
+  const isFumble = baseRoll === 1;
+  const success = isCrit ? true : (isFumble ? false : total >= dc);
+  const margin = total - dc;
+
+  return {
+    ...rollData,
+    baseRoll,
+    total,
+    dc,
+    success,
+    isCrit,
+    isFumble,
+    margin,
+  };
+}
+
+export function isCriticalSuccess(roll, threshold = 20) {
+  return Number(roll) >= threshold;
+}
+
+
