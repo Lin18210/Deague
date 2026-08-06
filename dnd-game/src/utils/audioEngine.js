@@ -114,6 +114,16 @@ class AudioEngine {
             this._tone(freq, freq, 'sine', 0.09, now + idx * 0.09, 0.5);
           });
           break;
+        case 'crit_hit':
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+            this._tone(freq, freq * 1.05, 'triangle', 0.12, now + idx * 0.06, 0.45);
+          });
+          this._noise(now, 0.15, 0.12);
+          break;
+        case 'crit_fumble':
+          this._tone(220, 110, 'sawtooth', 0.12, now, 0.4);
+          this._tone(196, 98, 'sawtooth', 0.1, now + 0.05, 0.45);
+          break;
         default:
           this._tone(440, 440, 'sine', 0.05, now, 0.1);
       }
