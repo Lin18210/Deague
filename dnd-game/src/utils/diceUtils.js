@@ -30,33 +30,37 @@ export function rollD20(modifier = 0) {
   };
 }
 
-export function rollWithAdvantage(modifier = 0) {
-  const r1 = rollDie(20);
-  const r2 = rollDie(20);
+export function rollWithAdvantage(modifier = 0, sides = 20) {
+  const r1 = rollDie(sides);
+  const r2 = rollDie(sides);
   const better = Math.max(r1, r2);
   return {
     roll: better,
+    result: better,
     total: better + modifier,
     modifier,
     rolls: [r1, r2],
-    isCrit: better === 20,
+    isCrit: better === sides,
     isFumble: better === 1,
     advantage: true,
+    type: 'advantage',
   };
 }
 
-export function rollWithDisadvantage(modifier = 0) {
-  const r1 = rollDie(20);
-  const r2 = rollDie(20);
+export function rollWithDisadvantage(modifier = 0, sides = 20) {
+  const r1 = rollDie(sides);
+  const r2 = rollDie(sides);
   const worse = Math.min(r1, r2);
   return {
     roll: worse,
+    result: worse,
     total: worse + modifier,
     modifier,
     rolls: [r1, r2],
-    isCrit: worse === 20,
+    isCrit: worse === sides,
     isFumble: worse === 1,
     disadvantage: true,
+    type: 'disadvantage',
   };
 }
 
@@ -69,13 +73,3 @@ export function recordRoll(label, value, max) {
 export function getRollHistory() { return [..._history]; }
 export function clearRollHistory() { _history.length = 0; }
 
-export function rollWithAdvantage(sides = 20) {
-  const a = Math.floor(Math.random() * sides) + 1;
-  const b = Math.floor(Math.random() * sides) + 1;
-  return { result: Math.max(a, b), rolls: [a, b], type: 'advantage' };
-}
-export function rollWithDisadvantage(sides = 20) {
-  const a = Math.floor(Math.random() * sides) + 1;
-  const b = Math.floor(Math.random() * sides) + 1;
-  return { result: Math.min(a, b), rolls: [a, b], type: 'disadvantage' };
-}
