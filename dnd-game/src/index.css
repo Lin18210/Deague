@@ -516,3 +516,11 @@ h1, h2, h3, h4, h5, h6 {
 .scrollbar-parchment::-webkit-scrollbar-thumb:hover { background: rgba(245,158,11,0.7); }
 .scrollbar-thin::-webkit-scrollbar { width: 3px; }
 .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(120,52,14,0.4); border-radius: 3px; }
+
+/* Glow borders */
+.glow-amber { box-shadow: 0 0 0 1px rgba(245,158,11,0.3), 0 0 12px rgba(245,158,11,0.15); }
+.glow-red   { box-shadow: 0 0 0 1px rgba(239,68,68,0.3),  0 0 12px rgba(239,68,68,0.15);  }
+.glow-blue  { box-shadow: 0 0 0 1px rgba(59,130,246,0.3), 0 0 12px rgba(59,130,246,0.15); }
+.action-btn { transition: transform 120ms ease, box-shadow 150ms ease; }
+.action-btn:hover  { transform: translateY(-1px); }
+.action-btn:active { transform: translateY(0) scale(0.97); }
