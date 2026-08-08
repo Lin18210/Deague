@@ -508,3 +508,11 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(90deg, transparent, rgba(180,83,9,0.4), transparent);
   margin: 12px 0;
 }
+
+/* Refined scrollbars */
+.scrollbar-parchment::-webkit-scrollbar { width: 4px; }
+.scrollbar-parchment::-webkit-scrollbar-track { background: rgba(28,25,23,0.5); border-radius: 4px; }
+.scrollbar-parchment::-webkit-scrollbar-thumb { background: rgba(180,83,9,0.5); border-radius: 4px; }
+.scrollbar-parchment::-webkit-scrollbar-thumb:hover { background: rgba(245,158,11,0.7); }
+.scrollbar-thin::-webkit-scrollbar { width: 3px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(120,52,14,0.4); border-radius: 3px; }
