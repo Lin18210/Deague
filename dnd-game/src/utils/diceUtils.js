@@ -68,3 +68,14 @@ export function recordRoll(label, value, max) {
 }
 export function getRollHistory() { return [..._history]; }
 export function clearRollHistory() { _history.length = 0; }
+
+export function rollWithAdvantage(sides = 20) {
+  const a = Math.floor(Math.random() * sides) + 1;
+  const b = Math.floor(Math.random() * sides) + 1;
+  return { result: Math.max(a, b), rolls: [a, b], type: 'advantage' };
+}
+export function rollWithDisadvantage(sides = 20) {
+  const a = Math.floor(Math.random() * sides) + 1;
+  const b = Math.floor(Math.random() * sides) + 1;
+  return { result: Math.min(a, b), rolls: [a, b], type: 'disadvantage' };
+}
