@@ -552,3 +552,11 @@ h1, h2, h3, h4, h5, h6 {
   100% { opacity: 0; transform: translateY(-52px) scale(0.8); }
 }
 .animate-dmg-float { animation: dmg-float 1s ease-out forwards; }
+
+/* Deeper parchment panel */
+.parchment-deep {
+  box-shadow:
+    inset 0 2px 12px rgba(0,0,0,0.6),
+    inset 0 -1px 4px rgba(120,52,14,0.1),
+    0 8px 32px rgba(0,0,0,0.4);
+}
