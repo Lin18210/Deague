@@ -59,3 +59,12 @@ export function rollWithDisadvantage(modifier = 0) {
     disadvantage: true,
   };
 }
+
+// Roll history tracker
+const _history = [];
+export function recordRoll(label, value, max) {
+  _history.unshift({ label, value, max, ts: Date.now() });
+  if (_history.length > 20) _history.pop();
+}
+export function getRollHistory() { return [..._history]; }
+export function clearRollHistory() { _history.length = 0; }
