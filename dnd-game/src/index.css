@@ -540,3 +540,15 @@ h1, h2, h3, h4, h5, h6 {
   pointer-events: none;
 }
 .btn-ripple:active::after { animation: ripple 0.45s ease-out; }
+
+/* HP bar */
+.hp-bar-fill { transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+@keyframes low-hp-pulse {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.55; }
+}
+.animate-low-hp { animation: low-hp-pulse 1.2s ease-in-out infinite; }
+@keyframes dmg-float {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-52px) scale(0.8); }
+}
+.animate-dmg-float { animation: dmg-float 1s ease-out forwards; }
