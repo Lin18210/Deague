@@ -524,3 +524,19 @@ h1, h2, h3, h4, h5, h6 {
 .action-btn { transition: transform 120ms ease, box-shadow 150ms ease; }
 .action-btn:hover  { transform: translateY(-1px); }
 .action-btn:active { transform: translateY(0) scale(0.97); }
+
+/* Ripple */
+@keyframes ripple {
+  from { transform: scale(0); opacity: 0.6; }
+  to   { transform: scale(2.5); opacity: 0; }
+}
+.btn-ripple { position: relative; overflow: hidden; }
+.btn-ripple::after {
+  content: ''; position: absolute;
+  width: 80px; height: 80px; border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  transform: scale(0);
+  top: 50%; left: 50%; margin: -40px 0 0 -40px;
+  pointer-events: none;
+}
+.btn-ripple:active::after { animation: ripple 0.45s ease-out; }
