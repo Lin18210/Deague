@@ -174,3 +174,17 @@ export function computePlayerReputation(storyState) {
 
   return Math.max(-10, Math.min(10, rep));
 }
+
+// Selector helpers
+export function hasVisited(state, nodeId) {
+  return Array.isArray(state.visitedNodes) && state.visitedNodes.includes(nodeId);
+}
+export function getActiveQuests(state) {
+  return (state.questLog || []).filter(q => q.status === 'active');
+}
+export function getTotalLoot(state) {
+  return (state.inventory || []).reduce((s, i) => s + (i.value || 0), 0);
+}
+export function getCompanionAffinity(state, id) {
+  return (state.companionAffinity || {})[id] ?? 0;
+}
