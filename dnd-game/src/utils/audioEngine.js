@@ -89,6 +89,13 @@ class AudioEngine {
           this._tone(500, 800, 'sine', 0.06, now, 0.3);
           this._tone(300, 600, 'triangle', 0.05, now + 0.1, 0.2);
           break;
+        case 'door':
+          this._tone(180, 90, 'triangle', 0.1, now, 0.35);
+          this._noise(now + 0.1, 0.2, 0.06);
+          break;
+        case 'ambient_wind':
+          this._tone(80, 100, 'sine', 0.03, now, 1.5, true);
+          break;
         case 'level_up':
           [261.63, 329.63, 392.00, 523.25, 659.25, 783.99].forEach((freq, idx) => {
             this._tone(freq, freq, 'sine', 0.09, now + idx * 0.09, 0.5);
