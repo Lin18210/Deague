@@ -97,3 +97,25 @@ export function tickTargetEffects(target) {
     expired,
   };
 }
+
+
+/**
+ * Cleanses negative conditions from a target
+ */
+export function cleanseTarget(target, cleanseTypes = [STATUS_TYPES.BLEED, STATUS_TYPES.POISON, STATUS_TYPES.BURN]) {
+  if (!target || !target.statusEffects) return target;
+  const filtered = target.statusEffects.filter(eff => !cleanseTypes.includes(eff.type));
+  return {
+    ...target,
+    statusEffects: filtered,
+  };
+}
+
+export function dispelPositiveBuffs(target) {
+  if (!target || !target.statusEffects) return target;
+  const filtered = target.statusEffects.filter(eff => eff.type !== STATUS_TYPES.SHIELDED && eff.type !== STATUS_TYPES.HASTE);
+  return {
+    ...target,
+    statusEffects: filtered,
+  };
+}
