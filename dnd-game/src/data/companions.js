@@ -486,3 +486,15 @@ export function getDexMod(entity) {
   const dex = entity.stats ? entity.stats.dexterity : entity.dexterity;
   return Math.floor((dex - 10) / 2);
 }
+
+// Enemy elemental weaknesses
+export const ENEMY_WEAKNESSES = {
+  skeleton  : { weak: 'blunt',   resist: 'pierce'   },
+  vampire   : { weak: 'holy',    resist: 'shadow'   },
+  golem     : { weak: 'magic',   resist: 'slash'    },
+  wraith    : { weak: 'holy',    resist: 'physical' },
+  dragon    : { weak: 'ice',     resist: 'fire'     },
+  troll     : { weak: 'fire',    resist: 'slash'    },
+  demon     : { weak: 'divine',  resist: 'poison'   },
+  lich      : { weak: 'radiant', resist: 'cold'     },
+};
