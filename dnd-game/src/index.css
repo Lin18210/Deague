@@ -581,3 +581,12 @@ h1, h2, h3, h4, h5, h6 {
 :focus-visible { outline: 2px solid rgba(245,158,11,0.7); outline-offset: 2px; }
 :focus:not(:focus-visible) { outline: none; }
 .focus-amber:focus-visible { box-shadow: 0 0 0 2px rgba(245,158,11,0.6); outline: none; }
+
+/* Combat log */
+@keyframes log-entry-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.log-entry { animation: log-entry-in 0.22s ease both; }
+.log-entry:nth-child(odd)  { background: rgba(255,255,255,0.02); }
+.log-entry:nth-child(even) { background: transparent; }
