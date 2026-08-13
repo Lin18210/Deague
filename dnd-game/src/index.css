@@ -590,3 +590,15 @@ h1, h2, h3, h4, h5, h6 {
 .log-entry { animation: log-entry-in 0.22s ease both; }
 .log-entry:nth-child(odd)  { background: rgba(255,255,255,0.02); }
 .log-entry:nth-child(even) { background: transparent; }
+
+/* Initiative tracker */
+@keyframes init-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(245,158,11,0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(245,158,11,0);  }
+  100% { box-shadow: 0 0 0 0 rgba(245,158,11,0);   }
+}
+.initiative-active {
+  background: rgba(245,158,11,0.1);
+  border-left: 2px solid rgba(245,158,11,0.8);
+  animation: init-pulse 1.4s ease-out infinite;
+}
