@@ -602,3 +602,9 @@ h1, h2, h3, h4, h5, h6 {
   border-left: 2px solid rgba(245,158,11,0.8);
   animation: init-pulse 1.4s ease-out infinite;
 }
+
+/* HP bar colour states */
+.hp-high   { background: linear-gradient(90deg, #16a34a, #22c55e); }
+.hp-medium { background: linear-gradient(90deg, #ca8a04, #eab308); }
+.hp-low    { background: linear-gradient(90deg, #b91c1c, #ef4444); }
+.hp-bar-bg { background: rgba(15,10,5,0.7); border-radius: 4px; overflow: hidden; }
