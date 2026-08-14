@@ -188,3 +188,19 @@ export function getTotalLoot(state) {
 export function getCompanionAffinity(state, id) {
   return (state.companionAffinity || {})[id] ?? 0;
 }
+
+/*
+  Default storyState shape:
+  {
+    currentNode      : string,
+    visitedNodes     : string[],
+    inventory        : Item[],
+    questLog         : Quest[],
+    companionAffinity: Record<string,number>,
+    flags            : Record<string,boolean>,
+    reputation       : number,
+    actProgress      : number,
+    totalXP          : number,
+    gold             : number,
+  }
+*/
