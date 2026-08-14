@@ -608,3 +608,9 @@ h1, h2, h3, h4, h5, h6 {
 .hp-medium { background: linear-gradient(90deg, #ca8a04, #eab308); }
 .hp-low    { background: linear-gradient(90deg, #b91c1c, #ef4444); }
 .hp-bar-bg { background: rgba(15,10,5,0.7); border-radius: 4px; overflow: hidden; }
+
+/* Quest badges */
+.quest-badge-active    { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+.quest-badge-completed { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+.quest-badge-failed    { background: rgba(239,68,68,0.12);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.3);  }
+.quest-progress-bar { height: 3px; border-radius: 3px; background: rgba(245,158,11,0.7); transition: width 0.4s ease; }
