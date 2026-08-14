@@ -498,3 +498,13 @@ export const ENEMY_WEAKNESSES = {
   demon     : { weak: 'divine',  resist: 'poison'   },
   lich      : { weak: 'radiant', resist: 'cold'     },
 };
+
+// Companion title by affinity
+export function getCompanionTitle(affinity) {
+  if (affinity >= 90) return 'Soulbound';
+  if (affinity >= 70) return 'Trusted Ally';
+  if (affinity >= 50) return 'Companion';
+  if (affinity >= 30) return 'Acquaintance';
+  if (affinity >= 10) return 'Neutral';
+  return 'Distrustful';
+}
