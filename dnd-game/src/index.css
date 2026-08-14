@@ -614,3 +614,11 @@ h1, h2, h3, h4, h5, h6 {
 .quest-badge-completed { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
 .quest-badge-failed    { background: rgba(239,68,68,0.12);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.3);  }
 .quest-progress-bar { height: 3px; border-radius: 3px; background: rgba(245,158,11,0.7); transition: width 0.4s ease; }
+
+/* Companion card */
+.companion-card { transition: transform 180ms ease, box-shadow 180ms ease; }
+.companion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px rgba(245,158,11,0.25), 0 6px 20px rgba(0,0,0,0.4);
+}
+.companion-card:hover .companion-portrait { filter: brightness(1.15) saturate(1.1); }
