@@ -650,3 +650,14 @@ h1, h2, h3, h4, h5, h6 {
   width: 14px; height: 14px; border-radius: 50%;
   display: inline-block; transition: all 200ms ease;
 }
+
+/* Ingredient card */
+.ingredient-card { position: relative; overflow: hidden; transition: border-color 180ms ease, transform 180ms ease; }
+.ingredient-card:hover { transform: translateY(-2px); }
+.ingredient-card::before {
+  content: ''; position: absolute;
+  top: -50%; left: -75%; width: 50%; height: 200%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.06), transparent);
+  transform: skewX(-20deg); transition: left 0.4s ease; pointer-events: none;
+}
+.ingredient-card:hover::before { left: 120%; }
