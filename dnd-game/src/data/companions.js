@@ -508,3 +508,12 @@ export function getCompanionTitle(affinity) {
   if (affinity >= 10) return 'Neutral';
   return 'Distrustful';
 }
+
+// Faction colours
+export const FACTION_COLORS = {
+  'Harpers'        : { bg: 'rgba(59,130,246,0.15)',  border: 'rgba(59,130,246,0.4)',  text: '#93c5fd' },
+  'Zhentarim'      : { bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.35)', text: '#fcd34d' },
+  'Order of the Gauntlet': { bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.35)', text: '#6ee7b7' },
+  'Emerald Enclave': { bg: 'rgba(34,197,94,0.12)',   border: 'rgba(34,197,94,0.35)',  text: '#86efac' },
+  'Lords Alliance' : { bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.35)',  text: '#fca5a5' },
+};
