@@ -89,6 +89,9 @@ class AudioEngine {
           this._tone(500, 800, 'sine', 0.06, now, 0.3);
           this._tone(300, 600, 'triangle', 0.05, now + 0.1, 0.2);
           break;
+        case 'spell_miss':
+          this._tone(350, 200, 'sine', 0.06, now, 0.3);
+          break;
         case 'door':
           this._tone(180, 90, 'triangle', 0.1, now, 0.35);
           this._noise(now + 0.1, 0.2, 0.06);
