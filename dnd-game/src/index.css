@@ -630,3 +630,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 .modal-panel    { animation: modal-slide-up 0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
 .modal-backdrop { backdrop-filter: blur(4px); background: rgba(5,4,2,0.7); }
+
+/* Act banner */
+@keyframes act-banner-in {
+  0%   { opacity: 0; letter-spacing: 0.3em; }
+  60%  { opacity: 1; letter-spacing: 0.15em; }
+  100% { opacity: 1; letter-spacing: 0.1em; }
+}
+.act-banner { animation: act-banner-in 1s ease-out both; text-transform: uppercase; font-family: var(--font-display); }
