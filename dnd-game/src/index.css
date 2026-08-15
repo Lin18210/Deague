@@ -638,3 +638,15 @@ h1, h2, h3, h4, h5, h6 {
   100% { opacity: 1; letter-spacing: 0.1em; }
 }
 .act-banner { animation: act-banner-in 1s ease-out both; text-transform: uppercase; font-family: var(--font-display); }
+
+/* Spell slots */
+.spell-slot-filled {
+  background: radial-gradient(circle, rgba(139,92,246,0.6), rgba(109,40,217,0.3));
+  border: 1px solid rgba(139,92,246,0.5);
+  box-shadow: 0 0 6px rgba(139,92,246,0.3);
+}
+.spell-slot-empty { background: rgba(30,25,40,0.6); border: 1px solid rgba(80,60,100,0.3); }
+.spell-slot-filled, .spell-slot-empty {
+  width: 14px; height: 14px; border-radius: 50%;
+  display: inline-block; transition: all 200ms ease;
+}
