@@ -966,3 +966,22 @@ h1, h2, h3, h4, h5, h6 {
 .status-burn-active { animation: burn-flame 1.5s ease-in-out infinite; }
 .status-poison-active { animation: poison-bubble 1.8s ease-in-out infinite; }
 .status-bleed-active { animation: bleed-pulse 1.2s ease-in-out infinite; }
+
+
+/* August 16 Polish: Combat Retreat Dust & Tactical Styles */
+@keyframes retreat-dust {
+  0% { transform: scale(0.6) translateY(0); opacity: 0.7; }
+  50% { transform: scale(1.4) translateY(-10px); opacity: 0.4; }
+  100% { transform: scale(2) translateY(-25px); opacity: 0; }
+}
+
+.btn-tactical-retreat {
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  background: linear-gradient(180deg, rgba(30, 27, 24, 0.8) 0%, rgba(69, 10, 10, 0.6) 100%);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-tactical-retreat:hover {
+  border-color: rgba(239, 68, 68, 0.8);
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.4);
+}
