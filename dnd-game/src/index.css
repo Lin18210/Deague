@@ -661,3 +661,12 @@ h1, h2, h3, h4, h5, h6 {
   transform: skewX(-20deg); transition: left 0.4s ease; pointer-events: none;
 }
 .ingredient-card:hover::before { left: 120%; }
+
+/* Mini-map dots */
+@keyframes map-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.5); opacity: 0.6; }
+}
+.map-dot-active  { animation: map-dot-pulse 1.6s ease-in-out infinite; }
+.map-dot-visited { opacity: 0.45; }
+.map-path { stroke: rgba(180,83,9,0.4); stroke-dasharray: 4 4; stroke-width: 1.5; }
