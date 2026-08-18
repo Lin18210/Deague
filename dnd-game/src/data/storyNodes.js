@@ -1348,3 +1348,27 @@ export const STORY_NODES = {
 };
 
 export default STORY_NODES;
+
+// Side quest nodes – hermit cave
+export const SIDE_QUEST_NODES = {
+  side_hermit_cave: {
+    title: "The Hermit's Warning",
+    act: 2, actLabel: 'SIDE QUEST',
+    text: 'A gaunt figure beckons from a cave mouth. "The vault stirs," he rasps. "The second seal broke at midnight. Beware the warden — she remembers every face."',
+    visualType: 'dungeon',
+    choices: [
+      { text: 'Thank him and press on.', nextNode: 'vault_entrance' },
+      { text: 'Ask him about the warden.', nextNode: 'side_hermit_warden_info' },
+    ]
+  },
+  side_hermit_warden_info: {
+    title: 'The Warden of Stone',
+    act: 2, actLabel: 'SIDE QUEST',
+    text: '"She was a paladin once. Strike her spellbook first." He presses a crude map into your hand.',
+    visualType: 'dungeon',
+    loot: { id: 'hermit_map', name: 'Crude Vault Map', desc: '+1 Perception inside vault.', type: 'scroll', value: 20 },
+    choices: [
+      { text: 'Take the map and continue.', nextNode: 'vault_entrance' },
+    ]
+  },
+};
