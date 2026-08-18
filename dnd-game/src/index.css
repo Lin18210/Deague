@@ -677,3 +677,17 @@ h1, h2, h3, h4, h5, h6 {
 .rarity-rare      { border-color: rgba(96,165,250,0.45); }
 .rarity-epic      { border-color: rgba(167,139,250,0.5); }
 .rarity-legendary { border-color: rgba(251,191,36,0.6); box-shadow: 0 0 8px rgba(251,191,36,0.2); }
+
+/* Text gradients */
+.text-gradient-gold {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.text-gradient-arcane {
+  background: linear-gradient(135deg, #a78bfa, #8b5cf6, #6d28d9);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.text-gradient-blood {
+  background: linear-gradient(135deg, #f87171, #ef4444, #b91c1c);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
