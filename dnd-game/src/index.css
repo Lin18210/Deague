@@ -691,3 +691,13 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(135deg, #f87171, #ef4444, #b91c1c);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
+
+/* Cross-fade scene overlay */
+@keyframes cross-fade-out {
+  0% { opacity: 0; } 30% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; }
+}
+.scene-crossfade {
+  position: fixed; inset: 0; background: #0a0806;
+  pointer-events: none; z-index: 1000;
+  animation: cross-fade-out 0.7s ease both;
+}
