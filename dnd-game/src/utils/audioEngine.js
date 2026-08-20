@@ -89,6 +89,16 @@ class AudioEngine {
           this._tone(500, 800, 'sine', 0.06, now, 0.3);
           this._tone(300, 600, 'triangle', 0.05, now + 0.1, 0.2);
           break;
+        case 'xp_gain':
+          [523.25, 659.25, 880].forEach((freq, idx) => {
+            this._tone(freq, freq, 'triangle', 0.05, now + idx * 0.06, 0.25);
+          });
+          break;
+        case 'quest_complete':
+          [392, 523.25, 659.25, 784, 1046.5].forEach((freq, idx) => {
+            this._tone(freq, freq, 'sine', 0.08, now + idx * 0.1, 0.45);
+          });
+          break;
         case 'spell_miss':
           this._tone(350, 200, 'sine', 0.06, now, 0.3);
           break;
