@@ -985,3 +985,14 @@ h1, h2, h3, h4, h5, h6 {
   border-color: rgba(239, 68, 68, 0.8);
   box-shadow: 0 0 12px rgba(220, 38, 38, 0.4);
 }
+
+
+/* August 21 Polish: Campfire Rest Ambience */
+@keyframes hearth-warmth {
+  0%, 100% { filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.4)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 28px rgba(239, 68, 68, 0.7)); transform: scale(1.02); }
+}
+
+.hearth-glow-active {
+  animation: hearth-warmth 3s ease-in-out infinite;
+}
