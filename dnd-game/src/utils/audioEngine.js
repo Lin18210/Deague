@@ -124,6 +124,15 @@ class AudioEngine {
           this._tone(220, 110, 'sawtooth', 0.12, now, 0.4);
           this._tone(196, 98, 'sawtooth', 0.1, now + 0.05, 0.45);
           break;
+        case 'campfire_rest':
+          this._tone(150, 90, 'sine', 0.08, now, 0.6);
+          this._noise(now, 0.4, 0.05);
+          break;
+        case 'rest_complete':
+          [261.63, 329.63, 392.00, 523.25].forEach((freq, idx) => {
+            this._tone(freq, freq, 'sine', 0.08, now + idx * 0.15, 0.8);
+          });
+          break;
         default:
           this._tone(440, 440, 'sine', 0.05, now, 0.1);
       }
