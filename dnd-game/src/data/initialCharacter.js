@@ -415,3 +415,11 @@ export const CLASS_META = {
 export const statModifier = (score) => Math.floor((score - 10) / 2);
 
 export const getAbilityMod = (character, ability) => statModifier(character.stats[ability]);
+
+// Class lore blurbs
+export const CLASS_LORE = {
+  Warrior : "Forged in a hundred battles. Warriors endure what others cannot.",
+  Rogue   : "Shadows are a Rogue's allies and silence their weapon.",
+  Mage    : "Masters of the arcane. They reshape reality through will alone.",
+  Cleric  : "The divine flows through a Cleric like light through a cracked door.",
+};
