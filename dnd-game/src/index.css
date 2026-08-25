@@ -751,3 +751,10 @@ h1, h2, h3, h4, h5, h6 {
   width: 1px; height: calc(100% + 8px); background: rgba(120,52,14,0.25);
 }
 .chronicle-entry:last-child::after { display: none; }
+
+/* Selection rings */
+.ring-selected-amber { box-shadow: 0 0 0 2px rgba(245,158,11,0.7), 0 0 12px rgba(245,158,11,0.2); }
+.ring-selected-red   { box-shadow: 0 0 0 2px rgba(239,68,68,0.7),  0 0 12px rgba(239,68,68,0.2);  }
+.ring-selected-blue  { box-shadow: 0 0 0 2px rgba(59,130,246,0.7), 0 0 12px rgba(59,130,246,0.2); }
+.scale-active  { transform: scale(1.04); }
+.scale-pressed { transform: scale(0.96); }
