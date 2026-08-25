@@ -758,3 +758,17 @@ h1, h2, h3, h4, h5, h6 {
 .ring-selected-blue  { box-shadow: 0 0 0 2px rgba(59,130,246,0.7), 0 0 12px rgba(59,130,246,0.2); }
 .scale-active  { transform: scale(1.04); }
 .scale-pressed { transform: scale(0.96); }
+
+/* XP notification */
+@keyframes xp-float {
+  0%  { opacity: 0; transform: translateY(10px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; }
+  100%{ opacity: 0; transform: translateY(-20px); }
+}
+.xp-notif {
+  animation: xp-float 2s ease both;
+  position: absolute; font-family: var(--font-display); font-size: 13px;
+  color: #fbbf24; text-shadow: 0 0 8px rgba(251,191,36,0.6);
+  pointer-events: none; white-space: nowrap;
+}
