@@ -772,3 +772,10 @@ h1, h2, h3, h4, h5, h6 {
   color: #fbbf24; text-shadow: 0 0 8px rgba(251,191,36,0.6);
   pointer-events: none; white-space: nowrap;
 }
+
+/* Mobile overrides */
+@media (max-width: 640px) {
+  .sidebar-panel { position: fixed; bottom: 0; left: 0; right: 0; border-radius: 16px 16px 0 0; max-height: 60vh; overflow-y: auto; z-index: 50; }
+  .main-layout   { flex-direction: column; }
+  .combat-grid   { grid-template-columns: 1fr; }
+}
