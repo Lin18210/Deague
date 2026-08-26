@@ -1372,3 +1372,12 @@ export const SIDE_QUEST_NODES = {
     ]
   },
 };
+
+// Tutorial overlay hints
+export const TUTORIAL_HINTS = {
+  first_combat  : 'Click an enemy card to target them, then choose an action below.',
+  spell_slots   : 'Spell slots recharge after each long rest. Use them wisely.',
+  companion_aff : 'Companion affinity grows when you make choices they approve of.',
+  alchemy       : 'Combine reagents at camp to brew potions before tough encounters.',
+  initiative    : 'Initiative order determines who acts first each round.',
+};
