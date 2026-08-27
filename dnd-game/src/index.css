@@ -794,3 +794,23 @@ h1, h2, h3, h4, h5, h6 {
 .scene-overlay-arcane  { background: linear-gradient(to top, rgba(6,2,20,0.92) 0%, rgba(20,8,40,0.5) 50%, rgba(30,10,60,0.2) 100%); }
 .scene-overlay-dungeon { background: linear-gradient(to top, rgba(5,5,5,0.95) 0%, rgba(10,8,6,0.6) 50%, rgba(15,12,10,0.2) 100%); }
 .scene-overlay-void    { background: linear-gradient(to top, rgba(2,0,10,0.97) 0%, rgba(10,2,30,0.65) 50%, rgba(20,4,50,0.3) 100%); }
+
+/* Weather overlays */
+@keyframes rain-fall {
+  from { transform: translateY(-100%) skewX(-10deg); opacity: 0.4; }
+  to   { transform: translateY(100vh) skewX(-10deg); opacity: 0.2; }
+}
+.weather-rain {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(140,170,200,0.06) 2px, rgba(140,170,200,0.06) 3px);
+  animation: rain-fall 0.7s linear infinite; pointer-events: none;
+}
+@keyframes fog-roll {
+  0%, 100% { transform: translateX(-5%); opacity: 0.15; }
+  50%       { transform: translateX(5%);  opacity: 0.25; }
+}
+.weather-fog {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(200,200,210,0.12) 0%, transparent 70%);
+  animation: fog-roll 8s ease-in-out infinite; pointer-events: none;
+}
