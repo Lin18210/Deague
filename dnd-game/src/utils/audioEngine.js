@@ -133,6 +133,15 @@ class AudioEngine {
             this._tone(freq, freq, 'sine', 0.08, now + idx * 0.15, 0.8);
           });
           break;
+        case 'page_turn':
+          this._noise(now, 0.12, 0.04);
+          this._tone(300, 120, 'sine', 0.03, now, 0.1);
+          break;
+        case 'lore_discover':
+          [392.00, 523.25, 659.25].forEach((freq, idx) => {
+            this._tone(freq, freq, 'triangle', 0.09, now + idx * 0.1, 0.5);
+          });
+          break;
         default:
           this._tone(440, 440, 'sine', 0.05, now, 0.1);
       }
