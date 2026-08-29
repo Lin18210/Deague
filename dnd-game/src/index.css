@@ -996,3 +996,15 @@ h1, h2, h3, h4, h5, h6 {
 .hearth-glow-active {
   animation: hearth-warmth 3s ease-in-out infinite;
 }
+
+
+/* August 29 Polish: Grimoire & Bestiary styling */
+.grimoire-page {
+  background: radial-gradient(circle at 50% 50%, rgba(30, 27, 24, 0.95), rgba(15, 12, 10, 0.98));
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8), 0 8px 32px rgba(0, 0, 0, 0.7);
+}
+
+.beast-portrait-frame {
+  border: 2px solid rgba(180, 83, 9, 0.5);
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
+}
