@@ -423,3 +423,11 @@ export const CLASS_LORE = {
   Mage    : "Masters of the arcane. They reshape reality through will alone.",
   Cleric  : "The divine flows through a Cleric like light through a cracked door.",
 };
+
+// Starting equipment flavour text
+export const CLASS_STARTING_FLAVOR = {
+  Warrior : "A battle-worn sword, a dented shield, and a hundred sparring sessions.",
+  Rogue   : "Twin daggers filed to a whisper, a lockpick set, and a black hood.",
+  Mage    : "A gnarled staff crackling with static and two remaining spell slots.",
+  Cleric  : "A holy symbol glowing faintly and a mace blessed by three priests.",
+};
