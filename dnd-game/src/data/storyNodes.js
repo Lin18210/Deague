@@ -1381,3 +1381,14 @@ export const TUTORIAL_HINTS = {
   alchemy       : 'Combine reagents at camp to brew potions before tough encounters.',
   initiative    : 'Initiative order determines who acts first each round.',
 };
+
+// Wanderer ending epilogue
+export const EPILOGUE_WANDERER = {
+  title: 'The Road Between',
+  act: 5, actLabel: 'EPILOGUE',
+  text: "You walk away from the mountain as the first snow falls. No banners, no titles, no debts. The Dreaming One is sealed. That is enough. You take the road that leads everywhere and nowhere — the wanderer's road — with nothing but the dawn ahead.",
+  visualType: 'hearth',
+  choices: [
+    { text: 'Begin a new legend. [Start New Game]', nextNode: '__RESET__' },
+  ]
+};
