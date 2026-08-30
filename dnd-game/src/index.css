@@ -870,3 +870,17 @@ h1, h2, h3, h4, h5, h6 {
   animation: void-particle 3s ease-in infinite;
   position: absolute;
 }
+
+/* Arcane orbit */
+@keyframes arcane-orbit {
+  0%   { transform: rotate(0deg) translateX(40px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(40px) rotate(-360deg); }
+}
+.arcane-orb {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(139,92,246,0.7);
+  box-shadow: 0 0 8px rgba(139,92,246,0.5);
+  animation: arcane-orbit 6s linear infinite;
+}
+.arcane-orb-slow { animation-duration: 10s; }
+.arcane-orb-fast { animation-duration: 3s; }
