@@ -89,3 +89,42 @@ The campaign consists of five distinct Acts, taking the player from the frozen p
 - **Vorn Ashmantle (Barbarian)**: Seeking vengeance against the specific shadow creatures that wiped out the Ashmantle clan three winters ago.
 
 
+
+
+---
+
+## August 2026 – Development Changelog
+
+### New Features
+- World map region definitions
+- Save/load service with localStorage
+- Achievement unlock system with notifications
+- Adaptive difficulty scaling service
+- Pub/sub event bus for decoupled game events
+- Procedural weather system for outdoor scenes
+- Ambient banter lines for companions during downtime
+- New SFX: door, ambient wind, spell miss, XP gain, quest complete
+- Custom hooks: useLocalStorage, useCombatLog, useGameTimer, usePartyStatus, useKeyboard, useFlashMessage, useAchievements, useWindowSize
+- Game balance constants file
+- Loot tables with tiered randomised drops
+- Enemy lore / bestiary flavour text
+- Side quest nodes (hermit cave)
+- Epilogue wanderer ending node
+- Companion ability lore descriptions
+- Class lore blurbs and starting equipment flavour text
+
+### UI Polish
+- Tooltip popup component and CSS
+- Scrollbar refinements across all panels
+- HP bar colour thresholds (green/yellow/red)
+- Combat log fade-in and striped rows
+- Achievement banner slide-in animation
+- Gold shimmer text effect for loot rewards
+- Glass morphism panel utility
+- Ripple effect for interactive buttons
+- Void particle field and arcane orbit animations
+- Weather overlay animations (rain, fog)
+- Mobile responsive sidebar collapse
+- Reduced-motion accessibility support
+- Focus-visible keyboard accessibility ring
+- Flash message types (info/warn/danger/success)
