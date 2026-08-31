@@ -517,3 +517,13 @@ export const FACTION_COLORS = {
   'Emerald Enclave': { bg: 'rgba(34,197,94,0.12)',   border: 'rgba(34,197,94,0.35)',  text: '#86efac' },
   'Lords Alliance' : { bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.35)',  text: '#fca5a5' },
 };
+
+// Ability lore for companion inspect panel
+export const COMPANION_ABILITY_LORE = {
+  'Divine Smite'  : "Channels holy energy into a strike, dealing extra radiant damage.",
+  'Shadowstep'    : "Teleports to a shadow within 30 ft, enabling a free attack with advantage.",
+  'Spirit Surge'  : "Calls ancestral spirits, granting +2 ATK to the party for two rounds.",
+  'Arcane Barrage': "Unleashes three bolts of magic at random enemies.",
+  'Rally Cry'     : "Restores 10 HP to all allies and removes one debuff.",
+  'Poisoned Blade': "Inflicts 5 poison DOT for 3 turns.",
+};
