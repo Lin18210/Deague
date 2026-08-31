@@ -884,3 +884,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 .arcane-orb-slow { animation-duration: 10s; }
 .arcane-orb-fast { animation-duration: 3s; }
+
+/* Gold shimmer */
+@keyframes gold-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+.loot-reward {
+  background: linear-gradient(90deg, rgba(180,83,9,0.6) 0%, rgba(245,158,11,0.9) 35%, rgba(251,191,36,1) 50%, rgba(245,158,11,0.9) 65%, rgba(180,83,9,0.6) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  animation: gold-shimmer 2s ease infinite;
+}
