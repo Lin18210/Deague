@@ -905,3 +905,10 @@ h1, h2, h3, h4, h5, h6 {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Final polish */
+*, *::before, *::after { box-sizing: border-box; }
+@media print {
+  .animate-torch-flicker, .animate-fog-drift, .animate-pulse-ring { animation: none !important; }
+  .modal-backdrop { display: none; }
+}
