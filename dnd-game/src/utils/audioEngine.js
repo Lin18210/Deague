@@ -142,6 +142,13 @@ class AudioEngine {
             this._tone(freq, freq, 'triangle', 0.09, now + idx * 0.1, 0.5);
           });
           break;
+        case 'intent_charge':
+          this._tone(120, 240, 'sawtooth', 0.1, now, 0.5, true);
+          this._noise(now + 0.2, 0.3, 0.08);
+          break;
+        case 'shield_brace':
+          this._tone(200, 320, 'triangle', 0.08, now, 0.25);
+          break;
         default:
           this._tone(440, 440, 'sine', 0.05, now, 0.1);
       }
