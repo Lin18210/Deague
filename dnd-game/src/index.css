@@ -1019,3 +1019,10 @@ h1, h2, h3, h4, h5, h6 {
 .intent-threat-lethal {
   animation: threat-pulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+
+/* September 4 Polish: Item Rarity Borders & Shimmer */
+.rarity-legendary { border-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+.rarity-epic { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+.rarity-rare { border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.3); }
+.rarity-uncommon { border-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
