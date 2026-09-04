@@ -149,6 +149,14 @@ class AudioEngine {
         case 'shield_brace':
           this._tone(200, 320, 'triangle', 0.08, now, 0.25);
           break;
+        case 'equip_weapon':
+          this._tone(400, 800, 'sawtooth', 0.08, now, 0.15, true);
+          this._noise(now + 0.05, 0.15, 0.09);
+          break;
+        case 'equip_armor':
+          this._tone(120, 80, 'triangle', 0.12, now, 0.2);
+          this._noise(now, 0.25, 0.1);
+          break;
         default:
           this._tone(440, 440, 'sine', 0.05, now, 0.1);
       }
