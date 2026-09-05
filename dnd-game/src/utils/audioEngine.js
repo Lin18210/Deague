@@ -157,6 +157,18 @@ class AudioEngine {
           this._tone(120, 80, 'triangle', 0.12, now, 0.2);
           this._noise(now, 0.25, 0.1);
           break;
+        case 'chest_open':
+          this._tone(160, 240, 'triangle', 0.08, now, 0.3);
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+            this._tone(freq, freq, 'sine', 0.08, now + 0.1 + idx * 0.08, 0.4);
+          });
+          break;
+        case 'coins_jingle':
+          for (let i = 0; i < 5; i++) {
+            const tap = now + i * 0.04;
+            this._tone(1200 + Math.random() * 800, 1800, 'sine', 0.05, tap, 0.06);
+          }
+          break;
         default:
           this._tone(440, 440, 'sine', 0.05, now, 0.1);
       }
