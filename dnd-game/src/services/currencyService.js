@@ -33,3 +33,16 @@ export function spendCurrency(type, amount) {
   }
   return false;
 }
+
+
+/**
+ * Format currency delta string for floating feedback
+ */
+export function formatCurrencyGain(type, amount) {
+  const labels = {
+    gold: 'Gold',
+    soulShards: 'Soul Shards',
+    ancientCoins: 'Ancient Relic Coin',
+  };
+  return `+${amount} ${labels[type] || type}`;
+}
