@@ -1037,3 +1037,14 @@ h1, h2, h3, h4, h5, h6 {
 .card-flip-reveal {
   animation: card-reveal-flip 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+
+
+/* September 6 Polish: Currency Sparkle & Soul Gem Glow */
+@keyframes soul-gem-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.4)); }
+  50% { filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.8)); }
+}
+
+.soul-gem-active {
+  animation: soul-gem-pulse 2s ease-in-out infinite;
+}
