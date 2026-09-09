@@ -169,6 +169,11 @@ class AudioEngine {
             this._tone(1200 + Math.random() * 800, 1800, 'sine', 0.05, tap, 0.06);
           }
           break;
+        case 'quest_fanfare':
+          [392.00, 523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+            this._tone(freq, freq, 'triangle', 0.1, now + idx * 0.12, 0.6);
+          });
+          break;
         default:
           this._tone(440, 440, 'sine', 0.05, now, 0.1);
       }
