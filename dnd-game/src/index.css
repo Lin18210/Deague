@@ -1048,3 +1048,11 @@ h1, h2, h3, h4, h5, h6 {
 .soul-gem-active {
   animation: soul-gem-pulse 2s ease-in-out infinite;
 }
+
+
+/* September 9 Polish: Quest Pin & Checklist */
+.quest-strikethrough {
+  text-decoration: line-through;
+  color: rgba(148, 163, 184, 0.6);
+  transition: all 0.2s ease-in-out;
+}
