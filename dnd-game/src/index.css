@@ -1056,3 +1056,16 @@ h1, h2, h3, h4, h5, h6 {
   color: rgba(148, 163, 184, 0.6);
   transition: all 0.2s ease-in-out;
 }
+
+
+/* September 10 Polish: Companion Synergy Link */
+@keyframes synergy-tether {
+  0% { stroke-dashoffset: 0; opacity: 0.5; }
+  50% { opacity: 0.9; }
+  100% { stroke-dashoffset: 20; opacity: 0.5; }
+}
+
+.synergy-link-glow {
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.7));
+  animation: synergy-tether 2s linear infinite;
+}
