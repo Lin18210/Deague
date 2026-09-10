@@ -30,3 +30,23 @@ export const RETREAT_BANTER = {
     "Keep moving! Vorn holds the rear guard!",
   ],
 };
+
+
+// Companion battle callout quotes
+export const COMBAT_CALLOUTS = {
+  lyra: [
+    "By the dawn, we shall not falter!",
+    "Shields up! The light sustains you!",
+    "Purge the dark rift!",
+  ],
+  kael: [
+    "Right between their ribs!",
+    "Blink and you'll miss my blade.",
+    "Target their spellcaster first!",
+  ],
+  vorn: [
+    "CRUSH THEM INTO GRAVEL!",
+    "Is that all the Far Realm can muster?!",
+    "Stand behind Vorn's hammer!",
+  ],
+};
