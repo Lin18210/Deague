@@ -259,3 +259,12 @@ class AudioEngine {
 
 const audio = new AudioEngine();
 export default audio;
+
+
+// Extend AudioEngine with volume control
+AudioEngine.prototype.setVolume = function(val) {
+  this.volume = Math.max(0, Math.min(1, val));
+  if (this.masterGain && this.ctx) {
+    this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+  }
+};
