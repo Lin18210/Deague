@@ -1069,3 +1069,16 @@ h1, h2, h3, h4, h5, h6 {
   filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.7));
   animation: synergy-tether 2s linear infinite;
 }
+
+
+/* September 12 Polish: Settings stone slider controls */
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #f59e0b;
+  border: 2px solid #78350f;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+}
