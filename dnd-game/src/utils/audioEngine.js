@@ -268,3 +268,15 @@ AudioEngine.prototype.setVolume = function(val) {
     this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
   }
 };
+
+
+// Theme change chime
+AudioEngine.prototype.playThemeShift = function() {
+  if (this.muted) return;
+  this.init();
+  if (!this.ctx) return;
+  const now = this.ctx.currentTime;
+  [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+    this._tone(freq, freq, 'sine', 0.05, now + idx * 0.08, 0.4);
+  });
+};
