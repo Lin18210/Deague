@@ -1082,3 +1082,19 @@ input[type=range]::-webkit-slider-thumb {
   cursor: pointer;
   box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
 }
+
+
+/* September 14 Polish: Atmospheric Theme Color Presets */
+[data-theme='blood_moon'] {
+  --color-amber-500: #ef4444;
+  --color-amber-400: #f87171;
+  --color-amber-300: #fca5a5;
+  filter: contrast(105%) saturate(115%);
+}
+
+[data-theme='abyssal'] {
+  --color-amber-500: #06b6d4;
+  --color-amber-400: #22d3ee;
+  --color-amber-300: #67e8f9;
+  filter: contrast(102%) hue-rotate(170deg);
+}
