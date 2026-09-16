@@ -12,3 +12,19 @@ export function useKeyboard(keyMap, enabled = true) {
     return () => window.removeEventListener('keydown', handle);
   }, [keyMap, enabled]);
 }
+
+
+// Quicksave F5 & Quickload F9 hotkey support
+export function setupQuickSaveHotkeys(onQuickSave, onQuickLoad) {
+  const handler = (e) => {
+    if (e.key === 'F5') {
+      e.preventDefault();
+      if (onQuickSave) onQuickSave();
+    } else if (e.key === 'F9') {
+      e.preventDefault();
+      if (onQuickLoad) onQuickLoad();
+    }
+  };
+  window.addEventListener('keydown', handler);
+  return () => window.removeEventListener('keydown', handler);
+}
