@@ -1098,3 +1098,9 @@ input[type=range]::-webkit-slider-thumb {
   --color-amber-300: #67e8f9;
   filter: contrast(102%) hue-rotate(170deg);
 }
+
+
+/* September 16 Polish: Save card wax seal styling */
+.save-card-slot:hover {
+  background: radial-gradient(circle at 10% 50%, rgba(120, 53, 15, 0.2), rgba(28, 25, 23, 0.9));
+}
