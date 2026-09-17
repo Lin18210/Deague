@@ -1104,3 +1104,10 @@ input[type=range]::-webkit-slider-thumb {
 .save-card-slot:hover {
   background: radial-gradient(circle at 10% 50%, rgba(120, 53, 15, 0.2), rgba(28, 25, 23, 0.9));
 }
+
+
+/* September 17 Polish: Scriptorium Parchment Transcript */
+.scriptorium-scroll {
+  background: radial-gradient(circle at 50% 50%, rgba(28, 25, 23, 0.9), rgba(12, 10, 9, 0.95));
+  border-left: 2px solid rgba(180, 83, 9, 0.4);
+}
