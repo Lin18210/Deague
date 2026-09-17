@@ -20,3 +20,11 @@ export function logDialogueEntry(speaker, text, type = 'narration') {
 export function getDialogueTranscript() {
   return [..._history];
 }
+
+
+/**
+ * Export transcript as plain text string
+ */
+export function exportTranscriptText() {
+  return _history.map(e => `[${e.speaker}]: ${e.text}`).join('\n\n');
+}
