@@ -1111,3 +1111,15 @@ input[type=range]::-webkit-slider-thumb {
   background: radial-gradient(circle at 50% 50%, rgba(28, 25, 23, 0.9), rgba(12, 10, 9, 0.95));
   border-left: 2px solid rgba(180, 83, 9, 0.4);
 }
+
+
+/* September 18 Polish: Arcane scroll burn & disintegration */
+@keyframes scroll-burn {
+  0% { filter: drop-shadow(0 0 4px #f59e0b) brightness(1); }
+  50% { filter: drop-shadow(0 0 16px #ef4444) brightness(1.6); opacity: 0.8; }
+  100% { filter: drop-shadow(0 0 25px #b91c1c) brightness(2); opacity: 0; transform: scale(1.08); }
+}
+
+.scroll-burn-active {
+  animation: scroll-burn 0.8s ease-out forwards;
+}
