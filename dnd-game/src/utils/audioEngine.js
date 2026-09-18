@@ -174,6 +174,13 @@ class AudioEngine {
             this._tone(freq, freq, 'triangle', 0.1, now + idx * 0.12, 0.6);
           });
           break;
+        case 'scroll_cast':
+          this._tone(600, 1200, 'sine', 0.08, now, 0.4, true);
+          this._noise(now + 0.1, 0.35, 0.1);
+          [880, 1108.73, 1318.51].forEach((freq, idx) => {
+            this._tone(freq, freq, 'triangle', 0.06, now + 0.2 + idx * 0.06, 0.3);
+          });
+          break;
         default:
           this._tone(440, 440, 'sine', 0.05, now, 0.1);
       }
