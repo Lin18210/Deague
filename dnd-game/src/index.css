@@ -1123,3 +1123,19 @@ input[type=range]::-webkit-slider-thumb {
 .scroll-burn-active {
   animation: scroll-burn 0.8s ease-out forwards;
 }
+
+
+/* September 19 Polish: Keyboard Keycap styles */
+kbd {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fcd34d;
+  background-color: #1c1917;
+  border: 1px solid #44403c;
+  border-radius: 0.375rem;
+  box-shadow: inset 0 -1px 0 #292524, 0 1px 2px rgba(0, 0, 0, 0.4);
+}
