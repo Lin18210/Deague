@@ -287,3 +287,15 @@ AudioEngine.prototype.playThemeShift = function() {
     this._tone(freq, freq, 'sine', 0.05, now + idx * 0.08, 0.4);
   });
 };
+
+
+// Act victory chord fanfare
+AudioEngine.prototype.playActVictory = function() {
+  if (this.muted) return;
+  this.init();
+  if (!this.ctx) return;
+  const now = this.ctx.currentTime;
+  [261.63, 329.63, 392.00, 523.25, 659.25, 783.99].forEach((freq, idx) => {
+    this._tone(freq, freq, 'triangle', 0.1, now + idx * 0.14, 1.2);
+  });
+};
