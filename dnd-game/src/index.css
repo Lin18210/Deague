@@ -1156,3 +1156,10 @@ kbd {
   font-weight: 700;
   margin-right: 0.5rem;
 }
+
+
+/* September 24 Polish: Illuminated Manuscript Borders */
+.illuminated-folio {
+  border-image: linear-gradient(to bottom, #f59e0b, #78350f) 1;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+}
