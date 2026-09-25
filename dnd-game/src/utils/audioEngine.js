@@ -299,3 +299,14 @@ AudioEngine.prototype.playActVictory = function() {
     this._tone(freq, freq, 'triangle', 0.1, now + idx * 0.14, 1.2);
   });
 };
+
+
+// Blunt heavy impact and magic burst synthesis
+AudioEngine.prototype.playHeavyImpact = function() {
+  if (this.muted) return;
+  this.init();
+  if (!this.ctx) return;
+  const now = this.ctx.currentTime;
+  this._tone(90, 40, 'sine', 0.15, now, 0.4);
+  this._noise(now, 0.3, 0.18);
+};
