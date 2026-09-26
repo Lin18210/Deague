@@ -128,3 +128,34 @@ The campaign consists of five distinct Acts, taking the player from the frozen p
 - Reduced-motion accessibility support
 - Focus-visible keyboard accessibility ring
 - Flash message types (info/warn/danger/success)
+
+---
+
+## September 2026 – Master Campaign Engine Update
+
+### ⚔️ Tactical Combat & Encounters
+- **Enemy Intent Prediction System**: Monsters telegraph upcoming tactical actions (Heavy Strike, Channeling Void Magic, Bracing Shield, Poison Spit) with threat ratings.
+- **Tactical Combat Retreat**: Flee active battles through DEX agility checks with opportunistic flank strike penalties and companion morale shifts.
+- **Turn-based Status Effects**: Bleed, Poison, Burn, Stun, and Haste status conditions with dynamic damage-over-time ticking and cleansing potions.
+- **Spell Scroll Pouch**: Single-use arcane scrolls (Fireball, Divine Aegis, Rift Blink) allowing any hero class to unleash emergency magic.
+- **Combat VFX Particle Canvas**: Lightweight 60fps HTML5 particle canvas rendering hit sparks, blood splatters, and tiered screen shake intensities.
+
+### 🛡️ Equipment, Armory & Currency
+- **Expanded Hero Armory**: Multi-slot paperdoll gear loadout (Weapon, Armor, Amulet, Relic) with dynamic D&D 5e stat modifier calculations.
+- **Tiered Item Rarity**: Color-coded rarity frames and glow borders (Common, Uncommon, Rare, Epic, Legendary).
+- **Multi-Currency Wallet**: Live tracking of Gold Sovereigns, Soul Shards, and Ancient Relic Coins with HUD widget.
+- **Spoils of Conquest Modal**: 3D card-flip victory loot reveal screen with item inspection and coin pickups.
+
+### 🏕️ World, Lore & Campfire
+- **Campfire Rest System**: D&D 5e short rest hit die recovery and full night encampment restoring health and dispelling curses.
+- **Bestiary Grimoire**: Complete monster dossier cataloging creature vulnerabilities, elemental resistances, and combat tactics.
+- **Quest Tracker Overlay**: Collapsible pinned HUD widget with objective milestone checklist and completion strikethrough.
+- **The Ascent Chronicle**: Illustrated campaign timeline documenting pivotal choices, companion fates, and Act conclusions.
+- **Dialogue Transcript Archive**: Searchable conversation history log preserving all Dungeon Master narrations and party interactions.
+
+### 🎨 Themes & Customization
+- **Atmospheric Palette Presets**: High Pass Onyx, Crimson Blood Moon, and Abyssal Azure themes selectable on the fly.
+- **Persistent Game Settings**: Dedicated settings menu for Master/SFX volume, text animation speed, and reduced motion toggles.
+- **Multi-Slot Save Archives**: Support for 3 distinct campaign save slots with level, location, and playtime metadata.
+- **Keyboard Shortcuts Engine**: Quick navigation hotkeys (1-4 for choices, Space for dice, F5 quicksave, F9 quickload, '?' guide).
+
