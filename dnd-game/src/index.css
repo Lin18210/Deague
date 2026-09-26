@@ -1174,3 +1174,11 @@ kbd {
   animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
   filter: contrast(120%) brightness(1.2);
 }
+
+
+/* September 26 Polish: High Contrast & Mobile Layout Polish */
+@media (max-width: 768px) {
+  .modal-backdrop-mobile {
+    padding: 0.5rem;
+  }
+}
