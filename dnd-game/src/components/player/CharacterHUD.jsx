@@ -6,6 +6,11 @@ import AlchemyCrafting from './AlchemyCrafting';
 import QuestJournal from './QuestJournal';
 import CompanionAffinity from './CompanionAffinity';
 import CampaignChronicle from './CampaignChronicle';
+import BestiaryModal from './BestiaryModal';
+import EquipmentModal from './EquipmentModal';
+import SettingsModal from './SettingsModal';
+import CampfireRestModal from './CampfireRestModal';
+import CurrencyHUD from './CurrencyHUD';
 
 function StatBar({ icon: Icon, label, current, max, color }) {
   const pct = max > 0 ? (current / max) * 100 : 0;
@@ -71,6 +76,10 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
   const [isJournalOpen, setIsJournalOpen] = useState(false);
   const [isAffinityOpen, setIsAffinityOpen] = useState(false);
   const [isChronicleOpen, setIsChronicleOpen] = useState(false);
+  const [isBestiaryOpen, setIsBestiaryOpen] = useState(false);
+  const [isEquipmentOpen, setIsEquipmentOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isRestOpen, setIsRestOpen] = useState(false);
   const stats = character.stats;
   const strMod = getAbilityMod(character, 'STR');
   const dexMod = getAbilityMod(character, 'DEX');
@@ -137,6 +146,38 @@ export default function CharacterHUD({ character, combatActive, storyState, onUs
         >
           <HeartHandshake size={14} className="text-sky-400" />
           <span>Party Bonds & Affinity Perks</span>
+        </button>
+
+        <button
+          onClick={() => setIsEquipmentOpen(true)}
+          className="w-full py-2 px-3 bg-stone-850 hover:bg-stone-800 border border-stone-700/60 hover:border-amber-500/50 text-stone-200 rounded-lg font-display text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+        >
+          <span>⚔️</span>
+          <span>Hero Armory & Equipment</span>
+        </button>
+
+        <button
+          onClick={() => setIsBestiaryOpen(true)}
+          className="w-full py-2 px-3 bg-red-950/60 hover:bg-red-900 border border-red-800/50 hover:border-red-400 text-red-200 rounded-lg font-display text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+        >
+          <span>📖</span>
+          <span>Bestiary & Creature Lore</span>
+        </button>
+
+        <button
+          onClick={() => setIsRestOpen(true)}
+          className="w-full py-2 px-3 bg-amber-950/60 hover:bg-amber-900 border border-amber-800/50 hover:border-amber-400 text-amber-200 rounded-lg font-display text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+        >
+          <span>🔥</span>
+          <span>Campfire Rest & Recuperate</span>
+        </button>
+
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className="w-full py-2 px-3 bg-stone-900 hover:bg-stone-800 border border-stone-700/50 text-stone-300 rounded-lg font-display text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+        >
+          <span>⚙️</span>
+          <span>Game Preferences</span>
         </button>
 
         <button

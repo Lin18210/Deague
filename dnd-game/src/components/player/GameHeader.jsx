@@ -1,3 +1,4 @@
+import ThemeSelector from './ThemeSelector';
 import { Volume2, VolumeX } from 'lucide-react';
 import audio from '../../utils/audioEngine';
 
@@ -15,6 +16,7 @@ export default function GameHeader({ title, subtitle, onReturn }) {
         {subtitle && <p className="text-xs text-amber-50/40 font-serif">{subtitle}</p>}
       </div>
       <div className="flex items-center gap-3">
+        <ThemeSelector />
         <button
           onClick={handleMute}
           className={`p-1.5 rounded border transition-all ${audio.muted ? 'border-slate-800 text-slate-600 hover:text-slate-400' : 'border-amber-900/50 text-amber-500 hover:text-amber-400'}`}
