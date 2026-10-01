@@ -451,6 +451,7 @@ export default function App() {
   useEffect(() => { activeInitiativeIndexRef.current = activeInitiativeIndex; }, [activeInitiativeIndex]);
 
   const textEndRef = useRef(null);
+  const storyScrollRef = useRef(null);
   const activeCheckRef = useRef(null);
 
   useEffect(() => {
@@ -1823,15 +1824,18 @@ You MUST respond strictly with a valid JSON object matching this schema structur
   };
 
   useEffect(() => {
-    if (textEndRef.current) {
-      textEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (storyScrollRef.current) {
+      storyScrollRef.current.scrollTo({
+        top: storyScrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }, [journal, gameState, isAiLoading]);
 
   const currentNode = campaignMode === 'ai' ? currentAiNode : STORY_NODES[currentNodeKey];
 
   return (
-    <div className={`min-h-screen bg-stone-950 text-stone-100 flex flex-col justify-between font-serif relative overflow-hidden select-none ${shakeScreen ? 'animate-shake-screen' : ''}`}>
+    <div className={`min-h-screen md:h-screen md:max-h-screen bg-stone-950 text-stone-100 flex flex-col justify-between font-serif relative overflow-x-hidden md:overflow-hidden select-none ${shakeScreen ? 'animate-shake-screen' : ''}`}>
       <style>{STYLE_INJECTION}</style>
 
       {/* Full-Screen Visual Flash Overlays */}
@@ -1953,7 +1957,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
       )}
 
       {/* Main Container Grid */}
-      <main className="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full p-4 md:p-6 gap-6 z-10 overflow-hidden">
+      <main className={`flex-1 max-w-7xl mx-auto w-full p-4 md:p-6 gap-6 z-10 min-h-0 flex flex-col ${gameState === 'character-select' ? 'overflow-y-auto' : 'overflow-hidden'}`}>
         
         {/* CHARACTER CREATOR PANEL */}
         {gameState === 'character-select' && (
@@ -2112,14 +2116,17 @@ You MUST respond strictly with a valid JSON object matching this schema structur
 
         {/* ACTIVE ADVENTURE STAGE */}
         {gameState !== 'character-select' && (
-          <div className="flex-1 flex flex-col md:flex-row gap-6 overflow-hidden">
+          <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-6 overflow-hidden">
             
             {/* Story display and text logs */}
-            <div className="flex-1 flex flex-col bg-stone-900/35 border border-stone-800/60 rounded-xl overflow-hidden shadow-2xl relative min-h-[400px]">
+            <div className="flex-1 min-h-0 flex flex-col bg-stone-900/35 border border-stone-800/60 rounded-xl overflow-hidden shadow-2xl relative">
               
               <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${currentNode?.visualType === 'arcane' ? 'from-purple-600 via-indigo-600 to-amber-600 animate-pulse' : 'from-amber-600 via-red-600 to-stone-900'}`} />
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-parchment flex flex-col justify-start relative">
+              <div 
+                ref={storyScrollRef}
+                className="flex-1 min-h-0 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-parchment flex flex-col justify-start relative"
+              >
                 
                 {gameState === 'combat' ? (
                   /* COMBAT VIEW MODE */
@@ -2465,7 +2472,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
 
               {/* Action Panels */}
               {gameState !== 'combat' && !apiError && (
-                <div className="p-4 md:p-6 border-t border-stone-800/60 bg-stone-900/50 backdrop-blur-sm z-10 shrink-0">
+                <div className="shrink-0 p-4 md:p-6 border-t border-stone-800/60 bg-stone-900/50 backdrop-blur-sm z-10">
                   
                   {gameState === 'active' && !isAiLoading && (
                     <div className="space-y-4">
@@ -2490,7 +2497,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
                       )}
 
                       <p className="text-[10px] text-stone-500 font-sans tracking-widest uppercase mb-1">Select your path:</p>
-                      <div className="grid grid-cols-1 gap-2">
+                      <div className="grid grid-cols-1 gap-2 max-h-48 md:max-h-56 overflow-y-auto scrollbar-parchment pr-1">
                         {currentNode?.choices?.map((choice, i) => {
                           const isCheck = !!choice.check;
                           return (
@@ -2587,7 +2594,7 @@ You MUST respond strictly with a valid JSON object matching this schema structur
             </div>
 
             {/* Sidebar Controls Panel (Dice Tower & Inventory) */}
-            <div className="w-full md:w-80 flex flex-col gap-6 shrink-0">
+            <div className="w-full md:w-80 shrink-0 flex flex-col gap-4 md:gap-5 overflow-y-auto scrollbar-parchment max-h-full sticky top-0 self-start">
               
               {/* Dynamic d20 Dice roller model */}
               <div className="bg-stone-900/40 border border-stone-800 rounded-xl p-5 flex flex-col items-center justify-center shadow-2xl relative min-h-[220px]">

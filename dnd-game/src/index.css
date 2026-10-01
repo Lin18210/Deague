@@ -15,6 +15,23 @@
   --font-serif: 'Crimson Text', serif;
 }
 
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  html, body, #root {
+    overflow: hidden;
+  }
+}
+
+.scrollbar-parchment {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 119, 6, 0.4) rgba(28, 25, 23, 0.9);
+}
+
 * {
   transition: all 200ms;
 }

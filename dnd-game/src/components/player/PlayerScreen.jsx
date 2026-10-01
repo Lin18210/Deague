@@ -49,7 +49,7 @@ export default function PlayerScreen({
   };
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col justify-between font-serif relative overflow-hidden select-none">
+    <div className="h-screen max-h-screen bg-stone-950 text-stone-100 flex flex-col justify-between font-serif relative overflow-hidden select-none">
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-orange-950/20 blur-[130px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-950/30 blur-[130px]" />
@@ -119,12 +119,12 @@ export default function PlayerScreen({
         </div>
       </div>
 
-      <main className="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full p-4 md:p-6 gap-6 z-10 overflow-hidden">
-        <div className="flex-1 flex flex-col md:flex-row gap-6 overflow-hidden">
-          <div className="flex-1 flex flex-col bg-stone-900/35 border border-stone-800/60 rounded-xl overflow-hidden shadow-2xl relative min-h-[400px]">
+      <main className="flex-1 min-h-0 flex flex-col md:flex-row max-w-7xl mx-auto w-full p-4 md:p-6 gap-6 z-10 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-6 overflow-hidden">
+          <div className="flex-1 min-h-0 flex flex-col bg-stone-900/35 border border-stone-800/60 rounded-xl overflow-hidden shadow-2xl relative">
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-600 animate-pulse" />
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-parchment flex flex-col justify-start relative">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-parchment flex flex-col justify-start relative">
               <EnvironmentalHazards currentAct={scene.act || 1} />
 
               {(narrative || scene.description) && (
@@ -221,7 +221,7 @@ export default function PlayerScreen({
             )}
           </div>
 
-          <div className="w-full md:w-80 flex flex-col gap-6 shrink-0">
+          <div className="w-full md:w-80 flex flex-col gap-4 md:gap-6 shrink-0 overflow-y-auto scrollbar-parchment max-h-full sticky top-0 self-start">
             <DiceTower
               checkPending={checkPending}
               onRollDice={onRollDice}
